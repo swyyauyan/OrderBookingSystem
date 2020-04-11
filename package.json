@@ -3,7 +3,11 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
+    "test": "mocha — timeout 10000",
     "start": "node ./bin/www"
+  },
+  "directories": {
+    "test": "test"
   },
   "devDependencies": {
     "chai": "4.2.0",
