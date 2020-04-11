@@ -3,6 +3,7 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
+var mongoose = require('mongoose');
 
 var indexRouter = require('./routes/index');
 var orderRouter = require('./routes/order');
@@ -21,6 +22,16 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
 app.use('/order', orderRouter);
+
+mongoose
+.connect('mongodb://localhost:27017/orderbooking', {
+useUnifiedTopology: true,
+useNewUrlParser: true,
+})
+.then(() => console.log('DB Connected!'))
+.catch(err => {
+console.log('DB Connection Error: ${err.message}');
+});
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

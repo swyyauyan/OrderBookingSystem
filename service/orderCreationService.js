@@ -1,4 +1,5 @@
 var _ = require('lodash');
+var OrderModel = require('../model/order')
 
 class OrderCreationService {
     get(){
@@ -16,6 +17,11 @@ class OrderCreationService {
     create(){
         console.log('********');
         console.log('NOT IMPLEMENTED: create Order');
+        var order = new OrderModel({ test: 'awesome' });
+        order.save(function (err) {
+            if (err) return handleError(err);
+            console.log(order + " saved to collection.");
+          });
         console.log('********');
     }
 }
