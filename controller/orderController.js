@@ -1,17 +1,19 @@
 var OrderCreationService = require('../service/orderCreationService');
 var orderCreationService = new OrderCreationService;
 
+var OrderBookService = require('../service/orderBookService');
+var orderBookService = new OrderBookService;
+
 exports.getOrders = function(req, res) {
-    orderCreationService.get();
+    orderBookService.get();
     res.send('NOT IMPLEMENTED: Get Order book');
 };
 
 exports.getOrderById = function(req, res) {
-    orderCreationService.getOrderById();
+    orderBookService.getOrderById();
     res.send('NOT IMPLEMENTED: Get Order by ID = ' + req.params.id);
 };
 
 exports.createOrder = function(req, res) {
-    orderCreationService.create();
-    res.send('NOT IMPLEMENTED: Create order');
+    res.send(orderCreationService.create(req.body));
 };
