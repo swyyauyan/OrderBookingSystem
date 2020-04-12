@@ -3,8 +3,21 @@ let chaiHttp = require('chai-http');
 var should = chai.should();
 chai.use(chaiHttp);
 let server = require('../app');
+const mongoose = require('mongoose');
+var Order = require('../model/order')
 
 describe('test API', () => {
+    
+    before(function (done) {
+        mongoose.connect('mongodb://localhost:27017/orderbooking');
+        const db = mongoose.connection;
+        db.on('error', console.error.bind(console, 'connection error'));
+        db.once('open', function() {
+          console.log('We are connected to test database!');
+          done();
+        });
+      });
+
     describe('/GET order book', () => {
         it('it should GET all order book', (done) => {
         chai.request(server)
@@ -37,7 +50,21 @@ describe('test API', () => {
                 (res).should.have.status(200);
                 (res.text).should.be.eql('NOT IMPLEMENTED: Create order');
                 done();
-                });
             });
         });
-    });
+
+        it('it should has database record there', (done) => {
+            Order.find({test: 'awesome'}, (err, name) => {
+                if(err) {throw err;}
+                if(name.length === 0) {throw new Error('No data!');}
+                done();
+              });
+            });
+        });
+
+    after(function(done){
+        mongoose.connection.db.dropDatabase(function(){
+            mongoose.connection.close(done);
+        });
+        });
+});
