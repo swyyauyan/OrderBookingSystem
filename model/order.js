@@ -1,9 +1,9 @@
-var mongoose = require('mongoose');
+var mongoose = require("mongoose");
 
 var Schema = mongoose.Schema;
 
 var OrderSchema = new Schema({
-  orderId: String, 
+  orderId: String,
   action: String,
   type: String,
   qty: Number,
@@ -12,4 +12,4 @@ var OrderSchema = new Schema({
   createAt: Date,
 });
 
-module.exports = mongoose.model('order', OrderSchema );
+module.exports = mongoose.model("order", OrderSchema);
