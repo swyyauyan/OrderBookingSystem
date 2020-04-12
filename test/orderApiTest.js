@@ -21,6 +21,12 @@ describe('test API', () => {
         });
       });
 
+      beforeEach(function (done) {
+        setTimeout(function(){
+          done();
+        }, 500);
+      });
+
     describe('Create Bid Market Order with no Ask Record', () => {
         var orderId;
         it('Create Bid Market Order and return order Id', (done) => {
@@ -43,12 +49,34 @@ describe('test API', () => {
         });
     });
 
+    describe('Create Ask Market Order with no Ask Record', () => {
+        var orderId;
+        it('Create Ask Market Order and return order Id', (done) => {
+        chai.request(server)
+            .post('/order')
+            .send({action: 'ask', type: 'market', qty: 1, amount: 400})
+            .end((err, res) => {
+                orderId = res.text;
+                (res).should.have.status(200);
+                should.not.equal(orderId, null);
+                done();
+            });
+        });
+
+        it('Found the log in order history', (done) => {
+            OrderHistory.find({orderId: orderId}, (err, result) => {
+                should.equal(result.length, 3);
+                done();
+              });
+        });
+    });
+
     describe('Create Bid Limit Order with no Ask Record', () => {
         var orderId;
         it('Create Bid Limit Order and return order Id', (done) => {
         chai.request(server)
             .post('/order')
-            .send({action: 'bid', type: 'limit', qty: 1, price: 400})
+            .send({action: 'BID', type: 'limit', qty: 1, price: 400})
             .end((err, res) => {
                 orderId = res.text;
                 (res).should.have.status(200);
@@ -67,8 +95,50 @@ describe('test API', () => {
         });
 
         it('Found the log in order book', (done) => {
+            
            Order.find({orderId: orderId}, (err, result) => {
+               console.log(result);
                 should.equal(result[0].type, 'limit');
+                should.equal(result[0].action, 'BID');
+                should.equal(result[0].qty, 1);
+                should.equal(result[0].price, 400);
+                should.equal(result[0].status, 'OPEN');
+                done();
+              });
+
+              
+        });
+    });
+
+    describe('Create Ask Limit Order with no Bid Record', () => {
+        var orderId;
+        it('Create Ask Limit Order and return order Id', (done) => {
+        chai.request(server)
+            .post('/order')
+            .send({action: 'ASK', type: 'limit', qty: 1, price: 400})
+            .end((err, res) => {
+                orderId = res.text;
+                (res).should.have.status(200);
+                should.not.equal(orderId, null);
+                done();
+            });
+        });
+
+        it('Found the log in order history', (done) => {
+            OrderHistory.find({orderId: orderId}, (err, result) => {
+                if(err) {throw err;}
+                if(result.length === 0) {throw new Error('No data')};
+                should.equal(result.length, 3);
+                done();
+              });
+        });
+
+        it('Found the log in order book', (done) => {
+            
+           Order.find({orderId: orderId}, (err, result) => {
+               console.log(result);
+                should.equal(result[0].type, 'limit');
+                should.equal(result[0].action, 'ASK');
                 should.equal(result[0].qty, 1);
                 should.equal(result[0].price, 400);
                 should.equal(result[0].status, 'OPEN');

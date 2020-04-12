@@ -12,7 +12,7 @@ class OrderCreationService {
                 this.createBid(request, id);
                 return id;
             case 'ASK':
-                this.createLog(id, request, 0.2);
+                this.createAsk(request, id);
                 return id;
             default:
                 this.createLog(id, request, 0.3);
@@ -29,16 +29,26 @@ class OrderCreationService {
         }
     }
 
+    createAsk(request, id){
+        this.createLog(id, request, 0.2);
+        var openBidOrder = Order.find({type: 'BID', status: 'Open'});
+        if( _.find(openBidOrder) || openBidOrder.size == 0 ){
+            this.createLog(id, request, 1.2);
+            this.notClosedOrderHandling(request, id);
+        }
+    }
+
     notClosedOrderHandling(request, id){
         request.type.toUpperCase() == 'LIMIT' ? 
-        this.addToOrderBook(id, request.type, request.qty, request.price):
+        this.addToOrderBook(id, request.action, request.type, request.qty, request.price):
         this.createLog(id, request, 99.1);
     }
 
-    addToOrderBook(id, type, qty, price){
-        this.createLog(id, {type: type, qty: qty, price: price},  2.1);
+    addToOrderBook(id, action, type, qty, price){
+        this.createLog(id, {action: action, type: type, qty: qty, price: price},  2.1);
         var order = new Order({
             orderId: id,
+            action: action,
             type: type,
             qty: qty,
             price: price,
