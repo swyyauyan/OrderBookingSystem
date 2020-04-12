@@ -4,6 +4,7 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var mongoose = require('mongoose');
+require('dotenv').config();
 
 var indexRouter = require('./routes/index');
 var orderRouter = require('./routes/order');
@@ -24,7 +25,7 @@ app.use('/', indexRouter);
 app.use('/order', orderRouter);
 
 mongoose
-.connect('mongodb://localhost:27017/orderbooking', {
+.connect(process.env.DB_URL, {
 useUnifiedTopology: true,
 useNewUrlParser: true,
 })
