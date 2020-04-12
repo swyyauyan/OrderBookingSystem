@@ -49,7 +49,7 @@ class OrderCreationService {
       : this.createLog(id, request, 99.1);
   }
 
-  addToOrderBook(id, action, type, qty, price) {
+  async addToOrderBook(id, action, type, qty, price) {
     this.createLog(
       id,
       { action: action, type: type, qty: qty, price: price },
@@ -64,17 +64,17 @@ class OrderCreationService {
       status: "OPEN",
       createAt: Date.now(),
     });
-    order.save();
+    await order.save();
   }
 
-  createLog(id, request, code) {
+  async createLog(id, request, code) {
     var history = new OrderHistory({
       orderId: id,
       request: request,
       description: historyList.getHistory(code),
       createAt: Date.now(),
     });
-    history.save();
+    await history.save();
   }
 
   getOrderId() {
