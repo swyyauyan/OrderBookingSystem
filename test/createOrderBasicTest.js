@@ -120,22 +120,20 @@ describe("test API", () => {
     var orderId;
 
     it("Create Ask Limit Order and return order Id", (done) => {
-      Promise.all([
-        Order.deleteMany({}),
-        OrderHistory.deleteMany({})
-      ])
-      .then((value) => {
-        console.log('Cleared database');
-        return Promise.resolve();
-      });
-      
+      Promise.all([Order.deleteMany({}), OrderHistory.deleteMany({})]).then(
+        (value) => {
+          console.log("Cleared database");
+          return Promise.resolve();
+        }
+      );
+
       chai
         .request(server)
         .post("/order")
         .send({ action: "Ask", type: "limit", qty: 1, price: 400 })
         .end((err, res) => {
           orderId = res.text;
-          console.log('1 = ' + orderId);
+          console.log("1 = " + orderId);
           res.should.have.status(200);
           should.not.equal(orderId, null);
           done();
@@ -150,7 +148,7 @@ describe("test API", () => {
         if (result.length === 0) {
           throw new Error("No data");
         }
-        console.log('2 = ' + result);
+        console.log("2 = " + result);
         should.equal(result.length, 3);
         done();
       });
@@ -158,7 +156,7 @@ describe("test API", () => {
 
     it("Found the log in order book", (done) => {
       Order.find({ orderId: orderId }, (err, result) => {
-        console.log('3 = ' + result);
+        console.log("3 = " + result);
         should.equal(result[0].type, "LIMIT");
         should.equal(result[0].action, "ASK");
         should.equal(result[0].qty, 1);
@@ -173,100 +171,101 @@ describe("test API", () => {
   describe("Create Bid Limit Order with lower price ask record", () => {
     var orderId;
     var askOrder = new Order({
-      orderId: 'test_ask',
-      action: 'ASK',
-      type: 'LIMIT',
+      orderId: "test_ask",
+      action: "ASK",
+      type: "LIMIT",
       qty: 1,
       price: 100,
-      status: "OPEN"
+      status: "OPEN",
     });
 
     it("Create Bid Limit Order and return order Id", (done) => {
-      Promise.all([askOrder.save()])
-      .then(() => {
-      Order.find({}, (err, result) => {
-        chai
-        .request(server)
-        .post("/order")
-        .send({ action: "Bid", type: "limit", qty: 1, price: 40 })
-        .end((err, res) => {
-          orderId = res.text;
-          res.should.have.status(200);
-          should.not.equal(orderId, null);
-          done();
+      Promise.all([askOrder.save()]).then(() => {
+        Order.find({}, (err, result) => {
+          chai
+            .request(server)
+            .post("/order")
+            .send({ action: "Bid", type: "limit", qty: 1, price: 40 })
+            .end((err, res) => {
+              orderId = res.text;
+              res.should.have.status(200);
+              should.not.equal(orderId, null);
+              done();
+            });
         });
-      });
       });
     });
 
     it("Found the log in order history", (done) => {
-      OrderHistory.find({ orderId: orderId, 'description.code':3.1 }, (err, result) => {
-        if (err) {
-          throw err;
+      OrderHistory.find(
+        { orderId: orderId, "description.code": 3.1 },
+        (err, result) => {
+          if (err) {
+            throw err;
+          }
+          should.equal(result.length, 1);
+          should.equal(
+            result[0].description.description,
+            "Opreation: Request Bid price is too low, all ack order prices are higher than the request price."
+          );
+          done();
         }
-        should.equal(result.length, 1);
-        should.equal(result[0].description.description,
-          'Opreation: Request Bid price is too low, all ack order prices are higher than the request price.')
-        done();
-      });
+      );
     });
     clearAllData();
   });
 
-  //
   describe("Create Ask Limit Order with higher price bid record", () => {
     var orderId;
     var askOrder = new Order({
-      orderId: 'test_ask',
-      action: 'BID',
-      type: 'LIMIT',
+      orderId: "test_ask",
+      action: "BID",
+      type: "LIMIT",
       qty: 1,
       price: 100,
-      status: "OPEN"
+      status: "OPEN",
     });
 
     it("Create Ask Limit Order and return order Id", (done) => {
-      Promise.all([askOrder.save()])
-      .then(() => {
-      Order.find({}, (err, result) => {
-        chai
-        .request(server)
-        .post("/order")
-        .send({ action: "Ask", type: "limit", qty: 1, price: 120 })
-        .end((err, res) => {
-          orderId = res.text;
-          res.should.have.status(200);
-          should.not.equal(orderId, null);
-          done();
+      Promise.all([askOrder.save()]).then(() => {
+        Order.find({}, (err, result) => {
+          chai
+            .request(server)
+            .post("/order")
+            .send({ action: "Ask", type: "limit", qty: 1, price: 120 })
+            .end((err, res) => {
+              orderId = res.text;
+              res.should.have.status(200);
+              should.not.equal(orderId, null);
+              done();
+            });
         });
-      });
       });
     });
 
     it("Found the log in order history", (done) => {
-      OrderHistory.find({ orderId: orderId, 'description.code':3.2 }, (err, result) => {
-        if (err) {
-          throw err;
+      OrderHistory.find(
+        { orderId: orderId, "description.code": 3.2 },
+        (err, result) => {
+          should.equal(result.length, 1);
+          should.equal(
+            result[0].description.description,
+            "Opreation: Request Ask price is too high, all bid order prices are lower than the request price."
+          );
+          done();
         }
-        should.equal(result.length, 1);
-        should.equal(result[0].description.description,
-          'Opreation: Request Ask price is too high, all bid order prices are lower than the request price.')
-        done();
-      });
+      );
     });
     clearAllData();
   });
-  //
 
-  function clearAllData(){
-    Promise.all([
-      Order.deleteMany({}),
-      OrderHistory.deleteMany({})
-    ])
-    .then((value) => {
-     console.log('Cleared all collections');
-      return Promise.resolve();
-    });
+  function clearAllData() {
+    Promise.all([Order.deleteMany({}), OrderHistory.deleteMany({})]).then(
+      (value) => {
+        console.log("Cleared all collections");
+        return Promise.resolve();
+      }
+    );
   }
 
   after(function (done) {

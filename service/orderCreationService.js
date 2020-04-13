@@ -21,21 +21,26 @@ class OrderCreationService {
 
   async createBid(request, id) {
     this.createLog(id, request, 0.1);
-    var openAskOrders =  await Order.find({ action: "ASK", status: "OPEN" }).sort({price: 1})
-    if(openAskOrders.length === 0){
+    var openAskOrders = await Order.find({
+      action: "ASK",
+      status: "OPEN",
+    }).sort({ price: 1 });
+    if (openAskOrders.length === 0) {
       this.notClosedOrderHandling(request, id, 1.1);
-    } else if(openAskOrders[0].price > request.price){
+    } else if (openAskOrders[0].price > request.price) {
       this.notClosedOrderHandling(request, id, 3.1);
     }
-
   }
 
   async createAsk(request, id) {
     this.createLog(id, request, 0.2);
-    var openBidsOrders = await Order.find({ action: "BID", status: "OPEN" }).sort({price: -1})
-    if(openBidsOrders.length === 0){
+    var openBidsOrders = await Order.find({
+      action: "BID",
+      status: "OPEN",
+    }).sort({ price: -1 });
+    if (openBidsOrders.length === 0) {
       this.notClosedOrderHandling(request, id, 1.2);
-    } else if(request.price > openBidsOrders[0].price ){
+    } else if (request.price > openBidsOrders[0].price) {
       this.notClosedOrderHandling(request, id, 3.2);
     }
   }
