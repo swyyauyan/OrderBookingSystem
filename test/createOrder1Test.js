@@ -47,6 +47,7 @@ describe("test API", () => {
         done();
       });
     });
+    clearAllData();
   });
 
   describe("Create Ask Market Order with no Ask Record", () => {
@@ -70,6 +71,7 @@ describe("test API", () => {
         done();
       });
     });
+    clearAllData();
   });
 
   describe("Create Bid Limit Order with no Ask Record", () => {
@@ -111,8 +113,7 @@ describe("test API", () => {
         done();
       });
     });
-
-    console.log('orderId = '  + orderId);
+    clearAllData();
   });
 
   describe("Create Ask Limit Order with no Bid Record", () => {
@@ -166,7 +167,107 @@ describe("test API", () => {
         done();
       });
     });
+    clearAllData();
   });
+
+  describe("Create Bid Limit Order with lower price ask record", () => {
+    var orderId;
+    var askOrder = new Order({
+      orderId: 'test_ask',
+      action: 'ASK',
+      type: 'LIMIT',
+      qty: 1,
+      price: 100,
+      status: "OPEN"
+    });
+
+    it("Create Bid Limit Order and return order Id", (done) => {
+      Promise.all([askOrder.save()])
+      .then(() => {
+      Order.find({}, (err, result) => {
+        chai
+        .request(server)
+        .post("/order")
+        .send({ action: "Bid", type: "limit", qty: 1, price: 40 })
+        .end((err, res) => {
+          orderId = res.text;
+          res.should.have.status(200);
+          should.not.equal(orderId, null);
+          done();
+        });
+      });
+      });
+    });
+
+    it("Found the log in order history", (done) => {
+      OrderHistory.find({ orderId: orderId, 'description.code':3.1 }, (err, result) => {
+        if (err) {
+          throw err;
+        }
+        should.equal(result.length, 1);
+        should.equal(result[0].description.description,
+          'Opreation: Request Bid price is too low, all ack order prices are higher than the request price.')
+        done();
+      });
+    });
+    clearAllData();
+  });
+
+  //
+  describe("Create Ask Limit Order with higher price bid record", () => {
+    var orderId;
+    var askOrder = new Order({
+      orderId: 'test_ask',
+      action: 'BID',
+      type: 'LIMIT',
+      qty: 1,
+      price: 100,
+      status: "OPEN"
+    });
+
+    it("Create Ask Limit Order and return order Id", (done) => {
+      Promise.all([askOrder.save()])
+      .then(() => {
+      Order.find({}, (err, result) => {
+        chai
+        .request(server)
+        .post("/order")
+        .send({ action: "Ask", type: "limit", qty: 1, price: 120 })
+        .end((err, res) => {
+          orderId = res.text;
+          res.should.have.status(200);
+          should.not.equal(orderId, null);
+          done();
+        });
+      });
+      });
+    });
+
+    it("Found the log in order history", (done) => {
+      OrderHistory.find({ orderId: orderId, 'description.code':3.2 }, (err, result) => {
+        if (err) {
+          throw err;
+        }
+        should.equal(result.length, 1);
+        should.equal(result[0].description.description,
+          'Opreation: Request Ask price is too high, all bid order prices are lower than the request price.')
+        done();
+      });
+    });
+    clearAllData();
+  });
+  //
+
+  function clearAllData(){
+    Promise.all([
+      Order.deleteMany({}),
+      OrderHistory.deleteMany({})
+    ])
+    .then((value) => {
+     console.log('Cleared all collections');
+      return Promise.resolve();
+    });
+  }
 
   after(function (done) {
     mongoose.connection.db.dropDatabase(function () {
