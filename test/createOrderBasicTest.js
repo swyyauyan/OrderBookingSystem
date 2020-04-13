@@ -198,7 +198,7 @@ describe("test API", () => {
 
     it("Found the log in order history", (done) => {
       OrderHistory.find(
-        { orderId: orderId, "description.code": 3.1 },
+        { orderId: orderId, "description.code": 3 },
         (err, result) => {
           if (err) {
             throw err;
@@ -206,7 +206,7 @@ describe("test API", () => {
           should.equal(result.length, 1);
           should.equal(
             result[0].description.description,
-            "Opreation: Request Bid price is too low, all ack order prices are higher than the request price."
+            "Opreation: Cannot find any matching order in order book with the request price."
           );
           done();
         }
@@ -245,12 +245,12 @@ describe("test API", () => {
 
     it("Found the log in order history", (done) => {
       OrderHistory.find(
-        { orderId: orderId, "description.code": 3.2 },
+        { orderId: orderId, "description.code": 3 },
         (err, result) => {
           should.equal(result.length, 1);
           should.equal(
             result[0].description.description,
-            "Opreation: Request Ask price is too high, all bid order prices are lower than the request price."
+            "Opreation: Cannot find any matching order in order book with the request price."
           );
           done();
         }

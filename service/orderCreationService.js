@@ -6,43 +6,39 @@ var historyList = require("../model/historyCodeList");
 class OrderCreationService {
   create(request) {
     var id = this.getOrderId();
-    switch (request.action.toUpperCase()) {
-      case "BID":
-        this.createBid(request, id);
-        return id;
-      case "ASK":
-        this.createAsk(request, id);
-        return id;
-      default:
-        this.createLog(id, request, 0.3);
-        return id;
+    var type = _.get(request, 'action').toUpperCase();
+    if(type == 'BID' || type == 'ASK'){
+      this.createOrder(request, id);
+    }else{
+      this.createLog(id, request, 0.3);
+    }
+    return id;
+  }
+
+  async createOrder(request, id){
+    this.createLog(id, request, 1);
+
+    var isBidOrder = request.action.toUpperCase() == 'BID';
+    
+    var openOrders;
+    
+    isBidOrder ? 
+    openOrders = await Order.find({ action: "ASK", status: "OPEN", }).sort({ price: -1 }) :
+    openOrders = await Order.find({ action: "BID", status: "OPEN", }).sort({ price: 1 });
+
+    if (openOrders.length === 0) {
+      this.notClosedOrderHandling(request, id, 2);
+    } else if (this.requestPriceChecking(isBidOrder, openOrders, request.price)) {
+      this.notClosedOrderHandling(request, id, 3);
+    } else {
+
     }
   }
 
-  async createBid(request, id) {
-    this.createLog(id, request, 0.1);
-    var openAskOrders = await Order.find({
-      action: "ASK",
-      status: "OPEN",
-    }).sort({ price: 1 });
-    if (openAskOrders.length === 0) {
-      this.notClosedOrderHandling(request, id, 1.1);
-    } else if (openAskOrders[0].price > request.price) {
-      this.notClosedOrderHandling(request, id, 3.1);
-    }
-  }
-
-  async createAsk(request, id) {
-    this.createLog(id, request, 0.2);
-    var openBidsOrders = await Order.find({
-      action: "BID",
-      status: "OPEN",
-    }).sort({ price: -1 });
-    if (openBidsOrders.length === 0) {
-      this.notClosedOrderHandling(request, id, 1.2);
-    } else if (request.price > openBidsOrders[0].price) {
-      this.notClosedOrderHandling(request, id, 3.2);
-    }
+  requestPriceChecking(isBidOrder, openOrders, requestPrice){
+    return isBidOrder ?  
+    openOrders[0].price > requestPrice :
+    requestPrice > openOrders[0].price;
   }
 
   notClosedOrderHandling(request, id, code) {
@@ -80,7 +76,7 @@ class OrderCreationService {
     var history = new OrderHistory({
       orderId: id,
       request: request,
-      description: historyList.getHistory(code),
+      description: historyList.getHistory(request, code),
       createAt: Date.now(),
     });
     await history.save();
