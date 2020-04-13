@@ -103,7 +103,7 @@ describe("test API", () => {
     it("Found the log in order book", (done) => {
       Order.find({ orderId: orderId }, (err, result) => {
         console.log(result);
-        should.equal(result[0].type, "limit");
+        should.equal(result[0].type, "LIMIT");
         should.equal(result[0].action, "BID");
         should.equal(result[0].qty, 1);
         should.equal(result[0].price, 400);
@@ -111,17 +111,30 @@ describe("test API", () => {
         done();
       });
     });
+
+    console.log('orderId = '  + orderId);
   });
 
   describe("Create Ask Limit Order with no Bid Record", () => {
     var orderId;
+
     it("Create Ask Limit Order and return order Id", (done) => {
+      Promise.all([
+        Order.deleteMany({}),
+        OrderHistory.deleteMany({})
+      ])
+      .then((value) => {
+        console.log('Cleared database');
+        return Promise.resolve();
+      });
+      
       chai
         .request(server)
         .post("/order")
-        .send({ action: "ASK", type: "limit", qty: 1, price: 400 })
+        .send({ action: "Ask", type: "limit", qty: 1, price: 400 })
         .end((err, res) => {
           orderId = res.text;
+          console.log('1 = ' + orderId);
           res.should.have.status(200);
           should.not.equal(orderId, null);
           done();
@@ -136,6 +149,7 @@ describe("test API", () => {
         if (result.length === 0) {
           throw new Error("No data");
         }
+        console.log('2 = ' + result);
         should.equal(result.length, 3);
         done();
       });
@@ -143,8 +157,8 @@ describe("test API", () => {
 
     it("Found the log in order book", (done) => {
       Order.find({ orderId: orderId }, (err, result) => {
-        console.log(result);
-        should.equal(result[0].type, "limit");
+        console.log('3 = ' + result);
+        should.equal(result[0].type, "LIMIT");
         should.equal(result[0].action, "ASK");
         should.equal(result[0].qty, 1);
         should.equal(result[0].price, 400);

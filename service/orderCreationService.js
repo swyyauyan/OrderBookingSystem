@@ -19,30 +19,38 @@ class OrderCreationService {
     }
   }
 
-  createBid(request, id) {
+  async createBid(request, id) {
     this.createLog(id, request, 0.1);
-    var openAskOrder = Order.find({ type: "ASK", status: "Open" });
-    if (_.find(openAskOrder) || openAskOrder.size == 0) {
-      this.createLog(id, request, 1.1);
-      this.notClosedOrderHandling(request, id);
+    var openAskOrders =  await Order.find({ action: "ASK", status: "OPEN" }).sort({price: 1})
+    
+    if(openAskOrders.length === 0){
+      this.notClosedOrderHandling(request, id, 1.1);
+    } else if(openAskOrders[0].price > request.price){
+      this.notClosedOrderHandling(request, id, 3.1);
     }
+
   }
 
-  createAsk(request, id) {
+  async createAsk(request, id) {
     this.createLog(id, request, 0.2);
-    var openBidOrder = Order.find({ type: "BID", status: "Open" });
-    if (_.find(openBidOrder) || openBidOrder.size == 0) {
-      this.createLog(id, request, 1.2);
-      this.notClosedOrderHandling(request, id);
+    var openBidsOrders = await Order.find({ action: "BID", status: "OPEN" }).sort({price: -1})
+    console.log('***');
+    console.log(openBidsOrders);
+    console.log('***');
+    if(openBidsOrders.length === 0){
+      this.notClosedOrderHandling(request, id, 1.2);
+    } else if(request.price > openBidsOrders[0].price ){
+      this.notClosedOrderHandling(request, id, 3.2);
     }
   }
 
-  notClosedOrderHandling(request, id) {
+  notClosedOrderHandling(request, id, code) {
+    this.createLog(id, request, code);
     request.type.toUpperCase() == "LIMIT"
       ? this.addToOrderBook(
           id,
-          request.action,
-          request.type,
+          request.action.toUpperCase(),
+          request.type.toUpperCase(),
           request.qty,
           request.price
         )
@@ -57,8 +65,8 @@ class OrderCreationService {
     );
     var order = new Order({
       orderId: id,
-      action: action,
-      type: type,
+      action: action.toUpperCase(),
+      type: type.toUpperCase(),
       qty: qty,
       price: price,
       status: "OPEN",

@@ -23,6 +23,12 @@ const historyList = [
   {
     code: 2.1,
     description: "Opreation: Create record in order book",
+  },{
+    code: 3.1,
+    description: "Opreation: Request Bid price is too low, all ack order prices are higher than the request price.",
+  },{
+    code: 3.2,
+    description: "Opreation: Request Ask price is too high, all bid order prices are lower than the request price.",
   },
   {
     code: 99.1,
