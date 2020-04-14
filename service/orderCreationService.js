@@ -6,43 +6,97 @@ var historyList = require("../model/historyCodeList");
 class OrderCreationService {
   create(request) {
     var id = this.getOrderId();
-    var type = _.get(request, 'action').toUpperCase();
-    if(type == 'BID' || type == 'ASK'){
+    var action = _.get(request, "action").toUpperCase();
+    if (action == "BID" || action == "ASK") {
       this.createOrder(request, id);
-    }else{
-      this.createLog(id, request, 0.3);
+    } else {
+      this.createLog(id, 0.3, request, {});
     }
     return id;
   }
 
-  async createOrder(request, id){
-    this.createLog(id, request, 1);
+  orderPreHandling(request) {
+    if (request.type.toUpperCase() == "MARKET") {
+      var qty =
+        _.get(request, "action").toUpperCase() == "BID"
+          ? Number.MAX_SAFE_INTEGER
+          : Number.MIN_SAFE_INTEGER;
+      request.qty = qty;
+    }
+    return request;
+  }
 
-    var isBidOrder = request.action.toUpperCase() == 'BID';
-    
+  async createOrder(request, id) {
+    this.createLog(id, 1, request, {type: request.type});
+
     var openOrders;
-    
-    isBidOrder ? 
-    openOrders = await Order.find({ action: "ASK", status: "OPEN", }).sort({ price: -1 }) :
-    openOrders = await Order.find({ action: "BID", status: "OPEN", }).sort({ price: 1 });
+
+    this.isBidOrder(request)
+      ? (openOrders = await Order.find({ action: "ASK", status: "OPEN" }).sort({
+          price: -1,
+        }))
+      : (openOrders = await Order.find({ action: "BID", status: "OPEN" }).sort({
+          price: 1,
+        }));
 
     if (openOrders.length === 0) {
-      this.notClosedOrderHandling(request, id, 2);
-    } else if (this.requestPriceChecking(isBidOrder, openOrders, request.price)) {
-      this.notClosedOrderHandling(request, id, 3);
+      this.notClosedOrderHandling(request, id, 2, {});
+    } else if (this.requestPriceChecking(request, openOrders)) {
+      this.notClosedOrderHandling(request, id, 3, {});
     } else {
-
+      this.orderHandling(id, request, openOrders); //TODO: NEED TO TEST.
     }
   }
 
-  requestPriceChecking(isBidOrder, openOrders, requestPrice){
-    return isBidOrder ?  
-    openOrders[0].price > requestPrice :
-    requestPrice > openOrders[0].price;
+  requestPriceChecking(request, openOrders) {
+    return this.isBidOrder(request)
+      ? openOrders[0].price > request.price
+      : request.price > openOrders[0].price;
   }
 
-  notClosedOrderHandling(request, id, code) {
-    this.createLog(id, request, code);
+  isBidOrder(request) {
+    return request.action.toUpperCase() == "BID";
+  }
+
+  async orderHandling(id, request, openOrders) {
+    var remainQty = request.qty;
+    for (let i = 0; i < openOrders.length; i++) {
+      var priceChecking = this.isBidOrder(request) ? 
+      request.price >= openOrders[i].price : //BID ORDER
+      openOrders[i].price >= request.price; //ASK ORDER
+
+      if(priceChecking){
+        if(openOrders[i].qty >= remainQty){
+          await this.writeQtyToOrder(openOrders[i].id, (openOrders[i].qty - remainQty));
+          remainQty = 0;
+          this.createLog(id, 99, request, {otherOrderId: openOrders[i].id});
+          this.createLog(openOrders[i].id, 4, request, {otherOrderId: id});
+        }else if(openOrders[i].qty < remainQty){
+          remainQty = remainQty - openOrders[i].qty;
+          await this.writeQtyToOrder(openOrders[i].id, 0);
+          this.createLog(id, 4, request, {otherOrderId: openOrders[i].id});
+          this.createLog(openOrders[i].id, 99, request, {otherOrderId: id});
+        }
+      }
+      if(remainQty == 0) { break; }
+    }
+
+    if (remainQty > 0) {
+      request.qty = remainQty;
+      this.notClosedOrderHandling(request, id, 5, {}); //TODO
+    }
+    this.clearRecord();
+  }
+
+
+  async writeQtyToOrder(id, qty){
+    var order = await Order.find({ id: id });
+    order.qty = qty;
+    await order.save();
+  }
+
+  notClosedOrderHandling(request, id, code, keyPair) {
+    this.createLog(id, code, request, keyPair);
     request.type.toUpperCase() == "LIMIT"
       ? this.addToOrderBook(
           id,
@@ -51,14 +105,15 @@ class OrderCreationService {
           request.qty,
           request.price
         )
-      : this.createLog(id, request, 99.1);
+      : this.createLog(id, 99, request, {});
   }
 
   async addToOrderBook(id, action, type, qty, price) {
     this.createLog(
       id,
+      2,
       { action: action, type: type, qty: qty, price: price },
-      2.1
+      {}
     );
     var order = new Order({
       orderId: id,
@@ -72,14 +127,29 @@ class OrderCreationService {
     await order.save();
   }
 
-  async createLog(id, request, code) {
+  async createLog(id, code, request, keyPair) {
+    var des = historyList.getHistory(code);
     var history = new OrderHistory({
       orderId: id,
       request: request,
-      description: historyList.getHistory(request, code),
+      description: {
+        code: des.code,
+        description: des.description
+        .replace("%ORDER_TYPE%", _.get(keyPair, 'type', ''))
+        .replace("%OTHER_ORDER_ID", _.get(keyPair, 'otherOrderId', ''))
+      },
       createAt: Date.now(),
     });
     await history.save();
+  }
+
+  clearRecord(){
+    var orders = Order.find({});
+    orders.forEach(order => {
+      if(order.qty == 0) {
+        order.remove();
+      }
+    });
   }
 
   getOrderId() {
