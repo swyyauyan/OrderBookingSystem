@@ -18,6 +18,8 @@ class OrderCreationService {
   }
 
   orderPreHandling(request) {
+    request.action = request.action.toUpperCase();
+    request.type = request.type.toUpperCase();
     if (request.type.toUpperCase() == "MARKET") {
       var price =
         _.get(request, "action").toUpperCase() == "BID"
