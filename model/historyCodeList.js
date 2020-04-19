@@ -15,15 +15,22 @@ const historyList = [
   },
   {
     code: 4,
-    description: "Opreation: Order reduce stock amount, related order = %OTHER_ORDER_ID%",
+    description:
+      "Opreation: Order reduce stock amount, related order = %OTHER_ORDER_ID%",
   },
   {
     code: 5,
-    description: "Opreation: Still have stock in order. "
-  },{
+    description: "Opreation: Still have stock in order. ",
+  },
+  {
     code: 6,
-    description: "Opreation: Add request to order book."
-  },{
+    description: "Opreation: Add request to order book.",
+  },
+  {
+    code: 97,
+    description: "Invalid request action.  %ORDER_TYPE%",
+  },
+  {
     code: 98,
     description: "Closed: Order, all stock sold.",
   },
@@ -33,9 +40,7 @@ const historyList = [
   },
 ];
 
-module.exports.getHistory = function getHistoryDescription(
-  code
-) {
+module.exports.getHistory = function getHistoryDescription(code) {
   return getMessageByCode(code);
 };
 

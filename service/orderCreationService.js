@@ -12,7 +12,7 @@ class OrderCreationService {
     if (action == "BID" || action == "ASK") {
       this.createOrder(request, id);
     } else {
-      this.createLog(id, 0.3, request, {});
+      this.createLog(id, 97, request, {});
     }
     return id;
   }
@@ -31,7 +31,7 @@ class OrderCreationService {
   }
 
   async createOrder(request, id) {
-    this.createLog(id, 1, request, {type: request.type});
+    this.createLog(id, 1, request, { type: request.type });
 
     var openOrders;
 
@@ -65,23 +65,36 @@ class OrderCreationService {
   async orderHandling(id, request, openOrders) {
     var remainQty = request.qty;
     for (let i = 0; i < openOrders.length; i++) {
-      var priceChecking = this.isBidOrder(request) ? 
-      request.price >= openOrders[i].price : //BID ORDER
-      openOrders[i].price >= request.price; //ASK ORDER
-      if(priceChecking){
-        if(openOrders[i].qty >= remainQty){
-          await this.writeQtyToOrder(openOrders[i]._id, (openOrders[i].qty - remainQty));
+      var priceChecking = this.isBidOrder(request)
+        ? request.price >= openOrders[i].price //BID ORDER
+        : openOrders[i].price >= request.price; //ASK ORDER
+      if (priceChecking) {
+        if (openOrders[i].qty >= remainQty) {
+          await this.writeQtyToOrder(
+            openOrders[i]._id,
+            openOrders[i].qty - remainQty
+          );
           remainQty = 0;
-          this.createLog(id, 98, request, {otherOrderId: openOrders[i].orderId});
-          this.createLog(openOrders[i].orderId, 4, request, {otherOrderId: id});
-        }else if(openOrders[i].qty < remainQty){
+          this.createLog(id, 98, request, {
+            otherOrderId: openOrders[i].orderId,
+          });
+          this.createLog(openOrders[i].orderId, 4, request, {
+            otherOrderId: id,
+          });
+        } else if (openOrders[i].qty < remainQty) {
           remainQty = remainQty - openOrders[i].qty;
           await this.writeQtyToOrder(openOrders[i]._id, 0);
-          this.createLog(id, 4, request, {otherOrderId: openOrders[i].orderId});
-          this.createLog(openOrders[i].orderId, 98, request, {otherOrderId: id});
+          this.createLog(id, 4, request, {
+            otherOrderId: openOrders[i].orderId,
+          });
+          this.createLog(openOrders[i].orderId, 98, request, {
+            otherOrderId: id,
+          });
         }
       }
-      if(remainQty == 0) { break; }
+      if (remainQty == 0) {
+        break;
+      }
     }
 
     if (remainQty > 0) {
@@ -91,9 +104,8 @@ class OrderCreationService {
     this.clearRecord();
   }
 
-
-  async writeQtyToOrder(id, qty){
-    await Order.findOne({ _id: id }, function(err, order){
+  async writeQtyToOrder(id, qty) {
+    await Order.findOne({ _id: id }, function (err, order) {
       order.qty = qty;
       order.save();
     });
@@ -139,18 +151,18 @@ class OrderCreationService {
       description: {
         code: code,
         description: des.description
-        .replace("%ORDER_TYPE%", _.get(keyPair, 'type', ''))
-        .replace("%OTHER_ORDER_ID%", _.get(keyPair, 'otherOrderId', '')),
+          .replace("%ORDER_TYPE%", _.get(keyPair, "type", ""))
+          .replace("%OTHER_ORDER_ID%", _.get(keyPair, "otherOrderId", "")),
       },
       createAt: Date.now(),
     });
     await history.save();
   }
 
-  clearRecord(){
-    Order.find({}, function(err, orders){
-      orders.forEach(order => {
-        if(order.qty == 0) {
+  clearRecord() {
+    Order.find({}, function (err, orders) {
+      orders.forEach((order) => {
+        if (order.qty == 0) {
           order.remove();
         }
       });
