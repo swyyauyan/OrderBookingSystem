@@ -9,4 +9,6 @@ router.get("/:id", orderController.getOrderById);
 
 router.post("/", orderController.createOrder);
 
+router.get("/history/:id", orderController.getHistoriesByOrderId);
+
 module.exports = router;
