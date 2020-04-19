@@ -2,6 +2,8 @@ var _ = require("lodash");
 var Order = require("../model/order");
 var OrderHistory = require("../model/orderHistory");
 var historyList = require("../model/historyCodeList");
+var OrderOverviewService = require("../service/orderOverviewService");
+var orderOverviewService = new OrderOverviewService();
 
 class OrderCreationService {
   create(request) {
@@ -68,6 +70,9 @@ class OrderCreationService {
       var priceChecking = this.isBidOrder(request)
         ? request.price >= openOrders[i].price //BID ORDER
         : openOrders[i].price >= request.price; //ASK ORDER
+        
+        orderOverviewService.updateLastRecord(request.price, Math.min(openOrders[i].qty, remainQty));
+        
       if (priceChecking) {
         if (openOrders[i].qty >= remainQty) {
           await this.writeQtyToOrder(
@@ -75,11 +80,11 @@ class OrderCreationService {
             openOrders[i].qty - remainQty
           );
           remainQty = 0;
-          this.createLog(id, 98, request, {
-            otherOrderId: openOrders[i].orderId,
-          });
           this.createLog(openOrders[i].orderId, 4, request, {
             otherOrderId: id,
+          });
+          this.createLog(id, 98, request, {
+            otherOrderId: openOrders[i].orderId,
           });
         } else if (openOrders[i].qty < remainQty) {
           remainQty = remainQty - openOrders[i].qty;
