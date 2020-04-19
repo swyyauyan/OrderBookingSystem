@@ -69,13 +69,13 @@ class OrderCreationService {
         if(openOrders[i].qty >= remainQty){
           await this.writeQtyToOrder(openOrders[i].id, (openOrders[i].qty - remainQty));
           remainQty = 0;
-          this.createLog(id, 99, request, {otherOrderId: openOrders[i].id});
-          this.createLog(openOrders[i].id, 4, request, {otherOrderId: id});
+          this.createLog(id, 98, request, {otherOrderId: openOrders[i].orderId});
+          this.createLog(openOrders[i].orderId, 4, request, {otherOrderId: id});
         }else if(openOrders[i].qty < remainQty){
           remainQty = remainQty - openOrders[i].qty;
           await this.writeQtyToOrder(openOrders[i].id, 0);
-          this.createLog(id, 4, request, {otherOrderId: openOrders[i].id});
-          this.createLog(openOrders[i].id, 99, request, {otherOrderId: id});
+          this.createLog(id, 4, request, {otherOrderId: openOrders[i].orderId});
+          this.createLog(openOrders[i].orderId, 98, request, {otherOrderId: id});
         }
       }
       if(remainQty == 0) { break; }
@@ -90,9 +90,10 @@ class OrderCreationService {
 
 
   async writeQtyToOrder(id, qty){
-    var order = await Order.find({ id: id });
-    order.qty = qty;
-    await order.save();
+    await Order.findOne({ _id: id }, function(err, order){
+      order.qty = qty;
+      order.save();
+    });
   }
 
   notClosedOrderHandling(request, id, code, keyPair) {
@@ -111,7 +112,7 @@ class OrderCreationService {
   async addToOrderBook(id, action, type, qty, price) {
     this.createLog(
       id,
-      2,
+      6,
       { action: action, type: type, qty: qty, price: price },
       {}
     );
@@ -136,7 +137,7 @@ class OrderCreationService {
         code: des.code,
         description: des.description
         .replace("%ORDER_TYPE%", _.get(keyPair, 'type', ''))
-        .replace("%OTHER_ORDER_ID", _.get(keyPair, 'otherOrderId', ''))
+        .replace("%OTHER_ORDER_ID%", _.get(keyPair, 'otherOrderId', '')),
       },
       createAt: Date.now(),
     });
@@ -144,11 +145,12 @@ class OrderCreationService {
   }
 
   clearRecord(){
-    var orders = Order.find({});
-    orders.forEach(order => {
-      if(order.qty == 0) {
-        order.remove();
-      }
+    Order.find({}, function(err, orders){
+      orders.forEach(order => {
+        if(order.qty == 0) {
+          order.remove();
+        }
+      });
     });
   }
 

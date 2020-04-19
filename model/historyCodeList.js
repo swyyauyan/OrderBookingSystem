@@ -20,6 +20,12 @@ const historyList = [
   {
     code: 5,
     description: "Opreation: Still have stock in order. "
+  },{
+    code: 6,
+    description: "Opreation: Add request to order book."
+  },{
+    code: 98,
+    description: "Closed: Order, all stock sold.",
   },
   {
     code: 99,
