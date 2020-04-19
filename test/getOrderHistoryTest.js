@@ -10,7 +10,7 @@ require("dotenv").config();
 beforeEach(function (done) {
   setTimeout(function () {
     done();
-  }, 1000);
+  }, 500);
 });
 
 describe("Test order history API", () => {
