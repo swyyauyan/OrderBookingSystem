@@ -7,6 +7,12 @@ const mongoose = require("mongoose");
 var Order = require("../model/order");
 require("dotenv").config();
 
+beforeEach(function (done) {
+  setTimeout(function () {
+    done();
+  }, 1000);
+});
+
 describe("Test order book API", () => {
   before(function (done) {
     mongoose.connect(process.env.DB_URL_TEST);
@@ -31,14 +37,42 @@ describe("Test order book API", () => {
     });
   });
 
-  describe("/GET order book by id", () => {
+  describe("/GET order book by not existing id", () => {
     it("it should GET specific order book by id", (done) => {
       chai
         .request(server)
         .get("/order/2719")
         .end((err, res) => {
           res.should.have.status(200);
-          res.text.should.be.eql("NOT IMPLEMENTED: Get Order by ID = 2719");
+          res.text.should.be.eql("Cannot found order Id = 2719");
+          done();
+        });
+    });
+  });
+
+  describe("/GET order book by existing id", () => {
+  var orderId;
+    it("Create Bid Limit Order and return order Id", (done) => {
+      chai
+        .request(server)
+        .post("/order")
+        .send({ action: "BID", type: "limit", qty: 1, price: 400 })
+        .end((err, res) => {
+          orderId = res.text;
+          res.should.have.status(200);
+          should.not.equal(orderId, null);
+          done();
+        });
+    });
+
+    it("it should GET specific order book by id", (done) => {
+      chai
+        .request(server)
+        .get("/order/" + orderId)
+        .end((err, res) => {
+          res.should.have.status(200);
+          console.log(res.body[0]);
+          should.equal(res.body[0].orderId, orderId);
           done();
         });
     });

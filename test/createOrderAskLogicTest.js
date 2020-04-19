@@ -119,6 +119,7 @@ describe("Test post order API with ask request.", () => {
 
     it("Step 5: Bid record's should closed in order book.", (done) => {
       Order.find({ orderId: bidOrderId }, (err, result) => {
+        console.log(result);
         should.equal(result.length, 0);
         done();
       });
@@ -174,7 +175,14 @@ describe("Test post order API with ask request.", () => {
         });
       });
   });
+
   after(function (done) {
+    Promise.all([Order.deleteMany({}), OrderHistory.deleteMany({})]).then(
+      (value) => {
+        console.log("Cleared all collections");
+        return Promise.resolve();
+      }
+    );
     mongoose.connection.db.dropDatabase(function () {
       mongoose.connection.close(done);
     });

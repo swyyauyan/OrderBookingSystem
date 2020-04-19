@@ -1,5 +1,5 @@
 var _ = require("lodash");
-var OrderModel = require("../model/order");
+var Order = require("../model/order");
 
 class OrderBookService {
   get() {
@@ -8,10 +8,15 @@ class OrderBookService {
     console.log("********");
   }
 
-  getOrderById(orderId) {
-    console.log("********");
-    console.log("NOT IMPLEMENTED: Get Order bookGet Order by ID = " + orderId);
-    console.log("********");
+  async getOrderById(req, res) {
+    var orderId = req.params.id;
+    await Order.find({orderId: orderId}, function(err, result){
+      if(result.length === 0){
+        res.send('Cannot found order Id = ' + orderId);
+      }else{
+        res.send(result);
+      }
+    })
   }
 }
 

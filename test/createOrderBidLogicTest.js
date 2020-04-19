@@ -176,6 +176,12 @@ describe("Test post order API", () => {
       });
   });
   after(function (done) {
+    Promise.all([Order.deleteMany({}), OrderHistory.deleteMany({})]).then(
+      (value) => {
+        console.log("Cleared all collections");
+        return Promise.resolve();
+      }
+    );
     mongoose.connection.db.dropDatabase(function () {
       mongoose.connection.close(done);
     });
