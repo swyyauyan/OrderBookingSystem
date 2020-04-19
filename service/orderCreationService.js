@@ -6,6 +6,8 @@ var historyList = require("../model/historyCodeList");
 class OrderCreationService {
   create(request) {
     var id = this.getOrderId();
+    request = this.orderPreHandling(request);
+
     var action = _.get(request, "action").toUpperCase();
     if (action == "BID" || action == "ASK") {
       this.createOrder(request, id);
@@ -17,11 +19,11 @@ class OrderCreationService {
 
   orderPreHandling(request) {
     if (request.type.toUpperCase() == "MARKET") {
-      var qty =
+      var price =
         _.get(request, "action").toUpperCase() == "BID"
           ? Number.MAX_SAFE_INTEGER
-          : Number.MIN_SAFE_INTEGER;
-      request.qty = qty;
+          : 0;
+      request.price = price;
     }
     return request;
   }
@@ -33,10 +35,10 @@ class OrderCreationService {
 
     this.isBidOrder(request)
       ? (openOrders = await Order.find({ action: "ASK", status: "OPEN" }).sort({
-          price: -1,
+          price: 1,
         }))
       : (openOrders = await Order.find({ action: "BID", status: "OPEN" }).sort({
-          price: 1,
+          price: -1,
         }));
 
     if (openOrders.length === 0) {
@@ -44,7 +46,7 @@ class OrderCreationService {
     } else if (this.requestPriceChecking(request, openOrders)) {
       this.notClosedOrderHandling(request, id, 3, {});
     } else {
-      this.orderHandling(id, request, openOrders); //TODO: NEED TO TEST.
+      this.orderHandling(id, request, openOrders);
     }
   }
 
@@ -64,16 +66,15 @@ class OrderCreationService {
       var priceChecking = this.isBidOrder(request) ? 
       request.price >= openOrders[i].price : //BID ORDER
       openOrders[i].price >= request.price; //ASK ORDER
-
       if(priceChecking){
         if(openOrders[i].qty >= remainQty){
-          await this.writeQtyToOrder(openOrders[i].id, (openOrders[i].qty - remainQty));
+          await this.writeQtyToOrder(openOrders[i]._id, (openOrders[i].qty - remainQty));
           remainQty = 0;
           this.createLog(id, 98, request, {otherOrderId: openOrders[i].orderId});
           this.createLog(openOrders[i].orderId, 4, request, {otherOrderId: id});
         }else if(openOrders[i].qty < remainQty){
           remainQty = remainQty - openOrders[i].qty;
-          await this.writeQtyToOrder(openOrders[i].id, 0);
+          await this.writeQtyToOrder(openOrders[i]._id, 0);
           this.createLog(id, 4, request, {otherOrderId: openOrders[i].orderId});
           this.createLog(openOrders[i].orderId, 98, request, {otherOrderId: id});
         }
@@ -134,7 +135,7 @@ class OrderCreationService {
       orderId: id,
       request: request,
       description: {
-        code: des.code,
+        code: code,
         description: des.description
         .replace("%ORDER_TYPE%", _.get(keyPair, 'type', ''))
         .replace("%OTHER_ORDER_ID%", _.get(keyPair, 'otherOrderId', '')),

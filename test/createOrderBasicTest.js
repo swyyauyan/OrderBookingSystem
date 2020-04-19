@@ -32,7 +32,7 @@ describe("test API", () => {
       chai
         .request(server)
         .post("/order")
-        .send({ action: "bid", type: "market", qty: 1, amount: 400 })
+        .send({ action: "bid", type: "market", qty: 1, price: 400 })
         .end((err, res) => {
           orderId = res.text;
           res.should.have.status(200);
@@ -56,7 +56,7 @@ describe("test API", () => {
       chai
         .request(server)
         .post("/order")
-        .send({ action: "ask", type: "market", qty: 1, amount: 400 })
+        .send({ action: "ask", type: "market", qty: 1, price: 400 })
         .end((err, res) => {
           orderId = res.text;
           res.should.have.status(200);
