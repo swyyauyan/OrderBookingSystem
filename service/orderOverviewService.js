@@ -27,7 +27,7 @@ class OrderOverviewService {
                 lstPrc: overview[0].lstPrc,
                 lstVol: overview[0].lstVol,
                 lstTime: overview[0].lstTime,
-                totalVol: overview[0].lstVol,
+                totalVol: overview[0].totalVol,
                 high: overview[0].high, 
                 low: overview[0].low,
                 open: askOrders.length + bidOrders.length,
@@ -39,6 +39,7 @@ class OrderOverviewService {
   }
 
   async updateLastRecord(price, qty){
+      console.log(qty);
     await orderOverview.findOne({}, async function (err, overview) {
         if(overview === null){
             await new orderOverview({
@@ -53,7 +54,7 @@ class OrderOverviewService {
             overview.lstPrc = price;
             overview.lstVol = qty;
             overview.lstTime = Date.now();
-            overview.totalVol = overview.totalVol + qty;
+            overview.totalVol = (overview.totalVol + qty);
             if(overview.high < price){
                 overview.high = price;
             }

@@ -70,9 +70,10 @@ class OrderCreationService {
       var priceChecking = this.isBidOrder(request)
         ? request.price >= openOrders[i].price //BID ORDER
         : openOrders[i].price >= request.price; //ASK ORDER
-        
-        console.log(request.price + ' + ' + Math.min(openOrders[i].qty, remainQty));
-        orderOverviewService.updateLastRecord(request.price, Math.min(openOrders[i].qty, remainQty));
+
+        orderOverviewService.updateLastRecord(
+          openOrders[i].price, 
+          Math.min(openOrders[i].qty, remainQty));
         
       if (priceChecking) {
         if (openOrders[i].qty >= remainQty) {
