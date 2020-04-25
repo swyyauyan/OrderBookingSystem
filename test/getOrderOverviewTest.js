@@ -97,7 +97,6 @@ describe("Test order overview API", () => {
         .request(server)
         .get("/order/overview")
         .end((err, res) => {
-            console.log(res.body);
           res.should.have.status(200);
           should.equal(res.body.lstPrc, 120);
           should.equal(res.body.lstVol, 100);

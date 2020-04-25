@@ -1,0 +1,286 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "version": "1.1.0",
+    "title": "Orders book system",
+    "contact": {
+      "email": "swyyauyan.de@gmai.com"
+    }
+  },
+  "host": "localhost:3000",
+  "tags": [
+    {
+      "name": "Order Book",
+      "description": ""
+    },
+    {
+      "name": "Order Creation",
+      "description": ""
+    },
+    {
+      "name": "Order Overview",
+      "description": ""
+    },
+    {
+      "name": "Order History",
+      "description": ""
+    }
+  ],
+  "schemes": [
+    "http"
+  ],
+  "paths": {
+    "/order": {
+      "get": {
+        "tags": [
+          "Order Book"
+        ],
+        "summary": "Get orders books",
+        "description": "Get the real time order book.",
+        "operationId": "getOrdersBook",
+        "produces": [
+          "application/xml",
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "$ref": "#/definitions/OrdersBook"
+            }
+          },
+          "400": {
+            "description": "Invalid request."
+          }
+        },
+        "deprecated": false
+      },"post": {
+        "tags": [
+          "Order Creation"
+        ],
+        "summary": "Submit Order request",
+        "description": "",
+        "operationId": "createOrder",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/xml",
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "",
+            "description": "Created order request",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/Request"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Submitted"
+          },
+          "405": {
+            "description": "Invalid input"
+          }
+        }
+      }
+    },"/order/{orderId}": {
+      "get": {
+        "tags": [
+          "Order Book"
+        ],
+        "summary": "Get order by Id",
+        "description": "Get order information from real time order book",
+        "operationId": "getOrdersBookById",
+        "produces": [
+          "application/xml",
+          "application/json"
+        ],
+        "parameters": [{
+          "in": "path",
+          "name" : "orderId",
+          "schema": {
+            "type": "string"
+          },
+          "required": true
+        }],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "$ref": "#/definitions/OrdersBook"
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/order/overview": {
+      "get": {
+        "tags": [
+          "Order Overview"
+        ],
+        "summary": "Get order book overview",
+        "description": "",
+        "operationId": "getOrderOverview",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/xml",
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "$ref": "#/definitions/OrdersBook"
+            }
+          },
+          "400": {
+            "description": "Invalid request."
+          }
+        }
+      }
+    },
+    "/order/history/:id": {
+      "get": {
+        "tags": [
+          "Test"
+        ],
+        "summary": "Order History",
+        "operationId": "getHistoryById",
+        "responses": {
+          "200": {
+            "description": "successful operation"
+          },
+          "400": {
+            "description": "Invalid request."
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "OrdersBook": {
+      "type": "object",
+      "properties": {
+        "lstPrc": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "lstVol": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "lstTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "totalVol": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "high": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "low": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "open": {
+          "type": "integer",
+          "format": "int64e"
+        },
+        "close": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "bidList": {
+          "$ref": "#/definitions/BidList"
+        },
+        "askList": {
+          "$ref": "#/definitions/AskList"
+        }
+      },
+      "xml": {
+        "name": "OrdersBook"
+      }
+    },
+    "BidList": {
+      "type": "object",
+      "properties": {
+        "cnt": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "qty": {
+          "type": "integer",
+          "format": "int64e"
+        },
+        "bid": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "xml": {
+        "name": "BidList"
+      }
+    },
+    "AskList": {
+      "type": "object",
+      "properties": {
+        "cnt": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "qty": {
+          "type": "integer",
+          "format": "int64e"
+        },
+        "ask": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "xml": {
+        "name": "AskList"
+      }
+    },
+    "Request": {
+      "type": "object",
+      "properties": {
+        "action": {
+          "type": "string",
+          "enum": [
+            "bid",
+            "ask"
+          ]
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "limit",
+            "market"
+          ]
+        },
+        "qty": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "price": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "xml": {
+        "name": "Request"
+      }
+    }
+  }
+}
