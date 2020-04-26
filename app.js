@@ -8,6 +8,7 @@ require('dotenv').config();
 
 var indexRouter = require('./routes/index');
 var orderRouter = require('./routes/order');
+var tradingPhraseRouter = require('./routes/tradingPhrase');
 
 var app = express();
 
@@ -26,6 +27,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
 app.use('/order', orderRouter);
+app.use('/tradingPhrase', tradingPhraseRouter);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 mongoose
