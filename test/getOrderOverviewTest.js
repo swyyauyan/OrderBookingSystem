@@ -4,7 +4,7 @@ var should = chai.should();
 chai.use(chaiHttp);
 let server = require("../app");
 const mongoose = require("mongoose");
-var OrderOverview = require("../model/orderOverview");
+var sessionInformation = require("../model/sessionInformation");
 require("dotenv").config();
 
 beforeEach(function (done) {
@@ -97,6 +97,7 @@ describe("Test order overview API", () => {
         .request(server)
         .get("/order/overview")
         .end((err, res) => {
+          console.log(res.body);
           res.should.have.status(200);
           should.equal(res.body.lstPrc, 120);
           should.equal(res.body.lstVol, 100);
@@ -111,7 +112,7 @@ describe("Test order overview API", () => {
     });
 
     after(function (done) {
-        Promise.all([OrderOverview.deleteMany({})]).then(
+        Promise.all([sessionInformation.deleteMany({})]).then(
           (value) => {
             console.log("Cleared all collections");
             return Promise.resolve();

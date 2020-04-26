@@ -1,7 +1,7 @@
 var _ = require("lodash");
 var Order = require("../model/order");
 var OrderHistory = require("../model/orderHistory");
-var orderOverview = require("../model/orderOverview");
+var SessionInformation = require("../model/sessionInformation");
 
 class OrderOverviewService {
   async get(res) {
@@ -10,8 +10,8 @@ class OrderOverviewService {
     var askOrders = await Order.find({ action: "ASK" });
     var bidOrders = await Order.find({ action: "BID" });
 
-    var overview = await orderOverview.find({}, function (err, overview) {
-        if(overview.length === 0){
+    await SessionInformation.findOne({"key" : "orderOverview"}, function (err, overview) {
+        if(overview === null){
             res.send({
                 lstPrc: 0,
                 lstVol: 0,
@@ -23,13 +23,14 @@ class OrderOverviewService {
                 close: 0,
               });
         }else{
+            var overviewObj = overview.value;
             res.send({
-                lstPrc: overview[0].lstPrc,
-                lstVol: overview[0].lstVol,
-                lstTime: overview[0].lstTime,
-                totalVol: overview[0].totalVol,
-                high: overview[0].high, 
-                low: overview[0].low,
+                lstPrc: overviewObj.lstPrc,
+                lstVol: overviewObj.lstVol,
+                lstTime: overviewObj.lstTime,
+                totalVol: overviewObj.totalVol,
+                high: overviewObj.high, 
+                low: overviewObj.low,
                 open: askOrders.length + bidOrders.length,
                 close: totalOrders - (askOrders.length + bidOrders.length),
               });
@@ -39,29 +40,32 @@ class OrderOverviewService {
   }
 
   async updateLastRecord(price, qty){
-      console.log(qty);
-    await orderOverview.findOne({}, async function (err, overview) {
+    await SessionInformation.findOne({"key" : "orderOverview"}, async function (err, overview) {
         if(overview === null){
-            await new orderOverview({
+            await new SessionInformation({
+                key: "orderOverview",
+                value: {
                 lstPrc: price,
                 lstVol: qty,
-                lstTime: Date.now(),
+                lstTime: new Date().toString(),
                 totalVol: qty,
                 high: price, 
-                low: price,
+                low: price
+                }
             }).save();
         }else{
-            overview.lstPrc = price;
-            overview.lstVol = qty;
-            overview.lstTime = Date.now();
-            overview.totalVol = (overview.totalVol + qty);
-            if(overview.high < price){
-                overview.high = price;
+            var value = {
+                lstPrc : price,
+                lstVol : qty,
+                lstTime: new Date().toString(),
+                totalVol: (overview.value.totalVol + qty),
+                high: overview.value.high < price ? price : overview.value.high,
+                low: overview.value.low > price ? price : overview.value.low
             }
-            if(overview.low > price){
-                overview.low = price;
-            }
-            await overview.save();
+            overview.value = value;
+            await overview.save(function (err, overview) {
+                if (err) return console.error(err);
+              });
         }
       });
   }
