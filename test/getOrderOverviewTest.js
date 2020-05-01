@@ -12,6 +12,7 @@ beforeEach(function (done) {
     done();
   }, 500);
 });
+
 before(function (done) {
   mongoose.connect(process.env.DB_URL_TEST);
   const db = mongoose.connection;
@@ -23,19 +24,18 @@ before(function (done) {
 });
 
 describe("Test order overview API", () => {
-
-  it("Step 0: Get order overview..", (done) => {
-    chai.request(server)
-    .get('/order/overview')
-    .end((err, res) => {
-      res.should.have.status(200);
-      res.body.lstPrc.should.equal(0);
-      res.body.lstVol.should.equal(0);
-      res.body.lstTime.should.equal("");
-      res.body.totalVol.should.equal(0);
-      done();
-    });
-  }).timeout(10000);
+  it("Step 0: Get order overview..", () => {
+    chai
+      .request(server)
+      .get("/order/overview")
+      .end((err, res) => {
+        res.should.have.status(200);
+        res.body.lstPrc.should.equal(0);
+        res.body.lstVol.should.equal(0);
+        res.body.lstTime.should.equal("");
+        res.body.totalVol.should.equal(0);
+      });
+  });
 
   it("Step 1: Create ask limit Order.", (done) => {
     chai
@@ -61,7 +61,7 @@ describe("Test order overview API", () => {
       });
   });
 
-  it("Step 2: Get Order overview.", (done) => {
+  it("Step 2: Get Order overview.", () => {
     chai
       .request(server)
       .get("/order/overview")
@@ -76,7 +76,7 @@ describe("Test order overview API", () => {
         res.body.low.should.equal(120);
         res.body.open.should.equal(1);
         res.body.close.should.equal(1);
-        done();
+        // done();
       });
   });
 
@@ -92,7 +92,8 @@ describe("Test order overview API", () => {
       });
   });
 
-  it("Step 4: Get Order overview.", (done) => {
+  it("Step 4: Get Order overview.", () => {
+
     chai
       .request(server)
       .get("/order/overview")
@@ -105,7 +106,7 @@ describe("Test order overview API", () => {
         res.body.low.should.equal(120);
         res.body.open.should.equal(1);
         res.body.close.should.equal(2);
-        done();
+        // done();
       });
   });
 
