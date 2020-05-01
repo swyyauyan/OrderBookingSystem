@@ -252,6 +252,7 @@ describe("createOrderBasicTest", () => {
   });
 
   describe("Create Order in Pre-opening session - Pre-order matching Period", () => {
+    var orderId = '';
     it("1. Set trading phrase in Pre-opening session - Pre-order matching Period", (done) => {
       chai
         .request(server)
@@ -263,18 +264,19 @@ describe("createOrderBasicTest", () => {
         });
     });
 
-    it("3. create market order in Pre-opening session - Pre-order matching Period", (done) => {
+    it("2. create market order in Pre-opening session - Pre-order matching Period", (done) => {
       chai
         .request(server)
         .post("/order")
         .send({ action: "BID", type: "market", qty: 1, price: 400 })
         .end((err, res) => {
           res.should.have.status(200);
+          orderId = res.text;
           done();
         });
     }).timeout(2000);
 
-    it("2. create limit order in Pre-opening session - Pre-order matching Period", (done) => {
+    it("3. create limit order in Pre-opening session - Pre-order matching Period", (done) => {
       chai
         .request(server)
         .post("/order")
@@ -283,6 +285,14 @@ describe("createOrderBasicTest", () => {
           res.should.have.status(400);
           done();
         });
+    }).timeout(2000);
+
+    it("4. Market record is in order book - Pre-order matching Period", (done) => {
+      Order.findOne({'orderId': orderId}, function(err, order){
+        console.log(order);
+        should.equal(order.type, 'MARKET');
+        done();
+      });
     }).timeout(2000);
   });
 
