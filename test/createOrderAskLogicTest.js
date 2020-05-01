@@ -27,7 +27,7 @@ describe("Test post order API with ask request.", () => {
   });
 
   describe("Ask logic testing flow:", () => {
-    //HERE
+    
     var askOrderId;
     var bidOrderId;
     it("Step 1: Create Bid limit Order.", (done) => {
@@ -149,6 +149,7 @@ describe("Test post order API with ask request.", () => {
 
     it("Step 6: Ask record's should be reduced in order book.", (done) => {
         Order.find({ orderId: askOrderId }, (err, result) => {
+            console.log(result);
             should.equal(result[0].qty, 40);
             should.equal(result[0].price, 80);
             should.equal(result[0].status, "OPEN");

@@ -71,10 +71,11 @@ class OrderCreationService {
         ? request.price >= openOrders[i].price //BID ORDER
         : openOrders[i].price >= request.price; //ASK ORDER
 
-        orderOverviewService.updateLastRecord(
-          openOrders[i].price, 
-          Math.min(openOrders[i].qty, remainQty));
-        
+      orderOverviewService.updateLastRecord(
+        openOrders[i].price,
+        Math.min(openOrders[i].qty, remainQty)
+      );
+
       if (priceChecking) {
         if (openOrders[i].qty >= remainQty) {
           await this.writeQtyToOrder(
@@ -108,13 +109,13 @@ class OrderCreationService {
       request.qty = remainQty;
       this.notClosedOrderHandling(request, id, 5, {}); //TODO
     }
-    this.clearRecord();
+    await this.clearRecord();
   }
 
   async writeQtyToOrder(id, qty) {
-    await Order.findOne({ _id: id }, function (err, order) {
+    await Order.findOne({ _id: id }, async function (err, order) {
       order.qty = qty;
-      order.save();
+      await order.save();
     });
   }
 
@@ -166,11 +167,11 @@ class OrderCreationService {
     await history.save();
   }
 
-  clearRecord() {
-    Order.find({}, function (err, orders) {
-      orders.forEach((order) => {
+  async clearRecord() {
+    await Order.find({},  function (err, orders) {
+      orders.forEach(async (order) => {
         if (order.qty == 0) {
-          order.remove();
+          await order.remove();
         }
       });
     });

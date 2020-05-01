@@ -27,8 +27,12 @@ const historyList = [
     description: "Opreation: Add request to order book.",
   },
   {
+    code: 96,
+    description: "Cannot create order in phrase. %TRADING_PHRASE% .",
+  },
+  {
     code: 97,
-    description: "Invalid request action.  %ORDER_TYPE%",
+    description: "Invalid request action. %ORDER_TYPE%",
   },
   {
     code: 98,

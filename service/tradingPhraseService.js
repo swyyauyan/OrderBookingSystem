@@ -1,10 +1,17 @@
 var _ = require("lodash");
 var SessionInformation = require("../model/sessionInformation");
 
-const DEFAULT_TRADING_PHRASE = "Order Input Period";
+var OrderHistory = require("../service/orderHistoryService");
+var orderHistory = new OrderHistory();
+
+const DEFAULT_TRADING_PHRASE = "Continuous trading";
 
 class TradingPhraseService {
   async get(res) {
+    return await this.getPhrase();
+  }
+
+  async getPhrase(){
     await SessionInformation.findOne({ key: "tradingPhrase" }, async function (
       err,
       tradingPhrase
@@ -15,9 +22,9 @@ class TradingPhraseService {
           value: DEFAULT_TRADING_PHRASE,
         }).save();
 
-        res.send(DEFAULT_TRADING_PHRASE);
+        return DEFAULT_TRADING_PHRASE;
       } else {
-        res.send(tradingPhrase.value);
+        return tradingPhrase.value;
       }
     });
   }
@@ -75,6 +82,19 @@ class TradingPhraseService {
         res.send(closingPrice);
       }
     });
+  }
+
+  async canCreateOrder(id, request, orderType){
+    var tradingPhrase = await this.getPhrase();
+
+    if(tradingPhrase == DEFAULT_TRADING_PHRASE 
+      || tradingPhrase == 'Pre-opening session - Order Input Period' 
+      || (tradingPhrase == 'Pre-opening session - Pre-order matching Period' && orderType == 'MARKET')){
+      return true;
+    }else {
+      await orderHistory.createLog(id, 96, request, {'tradingPhrase': tradingPhrase});
+      return false;
+    }
   }
 }
 
