@@ -263,17 +263,6 @@ describe("createOrderBasicTest", () => {
         });
     });
 
-    it("2. create limit order in Pre-opening session - Pre-order matching Period", (done) => {
-      chai
-        .request(server)
-        .post("/order")
-        .send({ action: "BID", type: "limit", qty: 1, price: 400 })
-        .end((err, res) => {
-          res.should.have.status(400);
-          done();
-        });
-    }).timeout(2000);
-
     it("3. create market order in Pre-opening session - Pre-order matching Period", (done) => {
       chai
         .request(server)
@@ -281,6 +270,17 @@ describe("createOrderBasicTest", () => {
         .send({ action: "BID", type: "market", qty: 1, price: 400 })
         .end((err, res) => {
           res.should.have.status(200);
+          done();
+        });
+    }).timeout(2000);
+
+    it("2. create limit order in Pre-opening session - Pre-order matching Period", (done) => {
+      chai
+        .request(server)
+        .post("/order")
+        .send({ action: "BID", type: "limit", qty: 1, price: 400 })
+        .end((err, res) => {
+          res.should.have.status(400);
           done();
         });
     }).timeout(2000);

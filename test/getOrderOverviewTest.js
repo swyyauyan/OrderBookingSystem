@@ -4,7 +4,6 @@ var should = chai.should();
 chai.use(chaiHttp);
 let server = require("../app");
 const mongoose = require("mongoose");
-var sessionInformation = require("../model/sessionInformation");
 require("dotenv").config();
 
 before(function (done) {
@@ -14,10 +13,6 @@ before(function (done) {
   db.once("open", function () {
     console.log("We are connected to test database!");
     done();
-  });
-  Promise.all([sessionInformation.deleteMany({})]).then((value) => {
-    console.log("Cleared all collections");
-    return Promise.resolve();
   });
 });
 
@@ -109,10 +104,7 @@ describe("getOrderOverviewTest", () => {
   }).timeout(5000);
 
   after(function (done) {
-    Promise.all([sessionInformation.deleteMany({})]).then((value) => {
-      console.log("Cleared all collections");
-      return Promise.resolve();
-    });
+    
     mongoose.connection.db.dropDatabase(function () {
       mongoose.connection.close(done);
     });

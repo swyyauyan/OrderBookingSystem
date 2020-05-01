@@ -10,22 +10,26 @@ class OrderCreationService {
   async create(request, res) {
     var id = this.getOrderId();
 
-    var tradingPhrase = "";
-    await SessionInformation.findOne({ key: "tradingPhrase" }, async function (err,phrase) {
+
+    //TO CHECK: HERE IS PROBLEM.
+    var tradingPhrase = "Continuous trading";
+    await SessionInformation.findOne({ key: "tradingPhrase" }, async function (
+      err,
+      phrase
+    ) {
       tradingPhrase = _.get(phrase, "value", "Continuous trading");
     });
 
-    
     request = this.orderPreHandling(request, tradingPhrase);
     console.log(request);
 
     var action = _.get(request, "action");
     var type = _.get(request, "type");
 
-    console.log(tradingPhrase);
+    // console.log(tradingPhrase);
     if (this.orderValidation(action) && this.checkTradingPhrase(id, request)) {
       this.createOrder(request, id);
-    }else{
+    } else {
       res.status(400);
     }
     res.send(id);
@@ -33,7 +37,8 @@ class OrderCreationService {
 
   orderValidation(action) {
     if (action == "BID" || action == "ASK") {
-      return true;s
+      return true;
+      s;
     } else {
       this.createLog(id, 97, request, {});
       return false;
@@ -44,12 +49,13 @@ class OrderCreationService {
     if (
       request.tradingPhrase == "Continuous trading" ||
       request.tradingPhrase == "Pre-opening session - Order Input Period" ||
-      (request.tradingPhrase =="Pre-opening session - Pre-order matching Period" &&
+      (request.tradingPhrase ==
+        "Pre-opening session - Pre-order matching Period" &&
         request.type == "MARKET")
     ) {
       return true;
     }
-    this.createLog(id, 96, request, {'tradingPhrase': request.tradingPhrase});
+    this.createLog(id, 96, request, { tradingPhrase: request.tradingPhrase });
     return false;
   }
 
@@ -63,7 +69,10 @@ class OrderCreationService {
           : 0;
       request.price = price;
     }
-    request.tradingPhrase = tradingPhrase;
+
+    // if(!_.has(request, 'tradingPhrase')){
+      request.tradingPhrase = tradingPhrase;
+    // }
     return request;
   }
 
@@ -80,12 +89,25 @@ class OrderCreationService {
           price: -1,
         }));
 
-    if (openOrders.length === 0) {
-      this.notClosedOrderHandling(request, id, 2, {});
-    } else if (this.requestPriceChecking(request, openOrders)) {
-      this.notClosedOrderHandling(request, id, 3, {});
-    } else {
-      this.orderHandling(id, request, openOrders);
+    if (request.tradingPhrase == "Continuous trading") {
+      if (openOrders.length === 0) {
+        this.notClosedOrderHandling(request, id, 2, {});
+      } else if (this.requestPriceChecking(request, openOrders)) {
+        this.notClosedOrderHandling(request, id, 3, {});
+      } else {
+        this.orderHandling(id, request, openOrders);
+      }
+    }else if (
+      request.tradingPhrase == "Pre-opening session - Order Input Period" ||
+      request.tradingPhrase == "Pre-opening session - Pre-order matching Period"
+    ) {
+      this.addToOrderBook(
+        id,
+        request.action,
+        request.type,
+        request.qty,
+        request.price
+      );
     }
   }
 
@@ -211,9 +233,7 @@ class OrderCreationService {
     await history.save();
   }
 
-  async clearRecord() {
-    
-  }
+  async clearRecord() {}
 
   getOrderId() {
     return "_" + Math.random().toString(36).substr(2, 9);

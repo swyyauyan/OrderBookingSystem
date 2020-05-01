@@ -7,15 +7,26 @@ class OrderBookService {
       price: -1,
       createAt: 1,
     });
+
+
     var askOrders = await Order.find({ action: "ASK" }).sort({
       price: 1,
       createAt: 1,
     });
 
     res.send({
-      Bid: bidOrders,
-      Ask: askOrders,
+      Bid: this.marketOrderHandling(bidOrders),
+      Ask: this.marketOrderHandling(askOrders),
     });
+  }
+
+  marketOrderHandling(orders){
+    for(var i = 0; i < orders.length; i++){
+      if(orders[i].type == 'MARKET'){
+        orders[i].price = 'AU-AUCTION';
+      }
+    }
+    return orders;
   }
 
   async getOrderById(req, res) {
