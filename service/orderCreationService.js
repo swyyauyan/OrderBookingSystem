@@ -4,22 +4,56 @@ var OrderHistory = require("../model/orderHistory");
 var historyList = require("../model/historyCodeList");
 var OrderOverviewService = require("../service/orderOverviewService");
 var orderOverviewService = new OrderOverviewService();
+var SessionInformation = require("../model/sessionInformation");
 
 class OrderCreationService {
-  create(request) {
+  async create(request, res) {
     var id = this.getOrderId();
-    request = this.orderPreHandling(request);
 
-    var action = _.get(request, "action").toUpperCase();
-    if (action == "BID" || action == "ASK") {
+    var tradingPhrase = "";
+    await SessionInformation.findOne({ key: "tradingPhrase" }, async function (err,phrase) {
+      tradingPhrase = _.get(phrase, "value", "Continuous trading");
+    });
+
+    
+    request = this.orderPreHandling(request, tradingPhrase);
+    console.log(request);
+
+    var action = _.get(request, "action");
+    var type = _.get(request, "type");
+
+    console.log(tradingPhrase);
+    if (this.orderValidation(action) && this.checkTradingPhrase(id, request)) {
       this.createOrder(request, id);
-    } else {
-      this.createLog(id, 97, request, {});
+    }else{
+      res.status(400);
     }
-    return id;
+    res.send(id);
   }
 
-  orderPreHandling(request) {
+  orderValidation(action) {
+    if (action == "BID" || action == "ASK") {
+      return true;s
+    } else {
+      this.createLog(id, 97, request, {});
+      return false;
+    }
+  }
+
+  checkTradingPhrase(id, request) {
+    if (
+      request.tradingPhrase == "Continuous trading" ||
+      request.tradingPhrase == "Pre-opening session - Order Input Period" ||
+      (request.tradingPhrase =="Pre-opening session - Pre-order matching Period" &&
+        request.type == "MARKET")
+    ) {
+      return true;
+    }
+    this.createLog(id, 96, request, {'tradingPhrase': request.tradingPhrase});
+    return false;
+  }
+
+  orderPreHandling(request, tradingPhrase) {
     request.action = request.action.toUpperCase();
     request.type = request.type.toUpperCase();
     if (request.type.toUpperCase() == "MARKET") {
@@ -29,6 +63,7 @@ class OrderCreationService {
           : 0;
       request.price = price;
     }
+    request.tradingPhrase = tradingPhrase;
     return request;
   }
 
@@ -109,7 +144,15 @@ class OrderCreationService {
       request.qty = remainQty;
       this.notClosedOrderHandling(request, id, 5, {}); //TODO
     }
-    await this.clearRecord();
+
+    //CLEAR RECORD
+    await Order.find({}, function (err, orders) {
+      orders.forEach(async (order) => {
+        if (order.qty == 0) {
+          await order.remove();
+        }
+      });
+    });
   }
 
   async writeQtyToOrder(id, qty) {
@@ -160,6 +203,7 @@ class OrderCreationService {
         code: code,
         description: des.description
           .replace("%ORDER_TYPE%", _.get(keyPair, "type", ""))
+          .replace("%TRADING_PHRASE%", _.get(keyPair, "tradingPhrase", ""))
           .replace("%OTHER_ORDER_ID%", _.get(keyPair, "otherOrderId", "")),
       },
       createAt: Date.now(),
@@ -168,18 +212,46 @@ class OrderCreationService {
   }
 
   async clearRecord() {
-    await Order.find({},  function (err, orders) {
-      orders.forEach(async (order) => {
-        if (order.qty == 0) {
-          await order.remove();
-        }
-      });
-    });
+    
   }
 
   getOrderId() {
     return "_" + Math.random().toString(36).substr(2, 9);
   }
+
+  async getTradingPhrase() {}
+
+  // async canCreateOrder(orderType) {
+  //   console.log("canCreateOrder = ");
+  //   await SessionInformation.findOne({ key: "tradingPhrase" }, async function (
+  //     err,
+  //     phrase
+  //   ) {
+  //     console.log("tradingPhrase = " + phrase);
+  //     if (phrase === null) {
+  //       await new SessionInformation({
+  //         key: "tradingPhrase",
+  //         value: "Continuous trading",
+  //       }).save();
+  //       console.log('1');
+  //       return { 'allow': true };
+  //     } else {
+  //       var tradingPhrase = phrase.value;
+  //       if (
+  //         tradingPhrase == "Continuous trading" ||
+  //         tradingPhrase == "Pre-opening session - Order Input Period" ||
+  //         (tradingPhrase == "Pre-opening session - Pre-order matching Period" &&
+  //           orderType == "MARKET")
+  //       ) {
+  //         console.log('2');
+  //         return true;
+  //       } else {
+  //         console.log('3');
+  //         return { 'allow': false, 'tradingPhrase': tradingPhrase };
+  //       }
+  //     }
+  //   });
+  // }
 }
 
 module.exports = OrderCreationService;

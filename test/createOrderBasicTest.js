@@ -7,9 +7,10 @@ let server = require("../app");
 const mongoose = require("mongoose");
 var Order = require("../model/order");
 var OrderHistory = require("../model/orderHistory");
+var SessionInformation = require("../model/sessionInformation");
 require("dotenv").config();
 
-describe("test API", () => {
+describe("createOrderBasicTest", () => {
   before(function (done) {
     mongoose.connect(process.env.DB_URL_TEST);
     const db = mongoose.connection;
@@ -18,12 +19,6 @@ describe("test API", () => {
       console.log("We are connected to test database!");
       done();
     });
-  });
-
-  beforeEach(function (done) {
-    setTimeout(function () {
-      done();
-    }, 500);
   });
 
   describe("Create Bid Market Order with no Ask Record", () => {
@@ -39,7 +34,7 @@ describe("test API", () => {
           should.not.equal(orderId, null);
           done();
         });
-    });
+    }).timeout(1000);
 
     it("Found the log in order history", (done) => {
       OrderHistory.find({ orderId: orderId }, (err, result) => {
@@ -63,7 +58,7 @@ describe("test API", () => {
           should.not.equal(orderId, null);
           done();
         });
-    });
+    }).timeout(1000);
 
     it("Found the log in order history", (done) => {
       OrderHistory.find({ orderId: orderId }, (err, result) => {
@@ -87,7 +82,7 @@ describe("test API", () => {
           should.not.equal(orderId, null);
           done();
         });
-    });
+    }).timeout(1000);
 
     it("Found the log in order history", (done) => {
       OrderHistory.find({ orderId: orderId }, (err, result) => {
@@ -112,7 +107,7 @@ describe("test API", () => {
         should.equal(result[0].status, "OPEN");
         done();
       });
-    });
+    }).timeout(1000);
     clearAllData();
   });
 
@@ -137,7 +132,7 @@ describe("test API", () => {
           should.not.equal(orderId, null);
           done();
         });
-    });
+    }).timeout(1000);
 
     it("Found the log in order history", (done) => {
       OrderHistory.find({ orderId: orderId }, (err, result) => {
@@ -161,7 +156,7 @@ describe("test API", () => {
         should.equal(result[0].status, "OPEN");
         done();
       });
-    });
+    }).timeout(1000);
     clearAllData();
   });
 
@@ -191,7 +186,7 @@ describe("test API", () => {
             });
         });
       });
-    });
+    }).timeout(1000);
 
     it("Found the log in order history", (done) => {
       OrderHistory.find(
@@ -238,7 +233,7 @@ describe("test API", () => {
             });
         });
       });
-    });
+    }).timeout(1000);
 
     it("Found the log in order history", (done) => {
       OrderHistory.find(
@@ -256,8 +251,115 @@ describe("test API", () => {
     clearAllData();
   });
 
+  describe("Create Order in Pre-opening session - Pre-order matching Period", () => {
+    it("1. Set trading phrase in Pre-opening session - Pre-order matching Period", (done) => {
+      chai
+        .request(server)
+        .post("/tradingPhrase")
+        .send({ tradingPhrase: "Pre-opening session - Pre-order matching Period" })
+        .end((err, res) => {
+          res.should.have.status(200);
+          done();
+        });
+    });
+
+    it("2. create limit order in Pre-opening session - Pre-order matching Period", (done) => {
+      chai
+        .request(server)
+        .post("/order")
+        .send({ action: "BID", type: "limit", qty: 1, price: 400 })
+        .end((err, res) => {
+          res.should.have.status(400);
+          done();
+        });
+    }).timeout(2000);
+
+    it("3. create market order in Pre-opening session - Pre-order matching Period", (done) => {
+      chai
+        .request(server)
+        .post("/order")
+        .send({ action: "BID", type: "market", qty: 1, price: 400 })
+        .end((err, res) => {
+          res.should.have.status(200);
+          done();
+        });
+    }).timeout(2000);
+  });
+
+
+  describe("Create Order in Pre-opening session - Order matching Period", () => {
+    it("1. Set trading phrase in Pre-opening session - Order matching Period", (done) => {
+      chai
+        .request(server)
+        .post("/tradingPhrase")
+        .send({ tradingPhrase: "Pre-opening session - Order matching Period" })
+        .end((err, res) => {
+          res.should.have.status(200);
+          done();
+        });
+    });
+
+    it("2. create limit order in Pre-opening session - Order matching Period", (done) => {
+      chai
+        .request(server)
+        .post("/order")
+        .send({ action: "BID", type: "limit", qty: 1, price: 400 })
+        .end((err, res) => {
+          res.should.have.status(400);
+          done();
+        });
+    }).timeout(2000);
+
+    it("3. create market order in Pre-opening session - Order matching Period", (done) => {
+      chai
+        .request(server)
+        .post("/order")
+        .send({ action: "BID", type: "market", qty: 1, price: 400 })
+        .end((err, res) => {
+          res.should.have.status(400);
+          done();
+        });
+    }).timeout(2000);
+  });
+
+  describe("Create Order in Pre-opening session - Blocking Period", () => {
+    it("1. Set trading phrase in Pre-opening session - Blocking Period", (done) => {
+      chai
+        .request(server)
+        .post("/tradingPhrase")
+        .send({ tradingPhrase: "Pre-opening session - Blocking Period" })
+        .end((err, res) => {
+          res.should.have.status(200);
+          done();
+        });
+    });
+
+    it("2. create limit order in Pre-opening session - Blocking Period", (done) => {
+      chai
+        .request(server)
+        .post("/order")
+        .send({ action: "BID", type: "limit", qty: 1, price: 400 })
+        .end((err, res) => {
+          res.should.have.status(400);
+          done();
+        });
+    }).timeout(2000);
+
+    it("3. create market order in Pre-opening session - Blocking Period", (done) => {
+      chai
+        .request(server)
+        .post("/order")
+        .send({ action: "BID", type: "market", qty: 1, price: 400 })
+        .end((err, res) => {
+          res.should.have.status(400);
+          done();
+        });
+    }).timeout(2000);
+    clearAllData();
+  });
+
   function clearAllData() {
-    Promise.all([Order.deleteMany({}), OrderHistory.deleteMany({})]).then(
+    Promise.all([SessionInformation.deleteMany({}), Order.deleteMany({}), OrderHistory.deleteMany({})]).then(
       (value) => {
         console.log("Cleared all collections");
         return Promise.resolve();

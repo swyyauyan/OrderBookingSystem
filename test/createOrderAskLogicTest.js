@@ -7,9 +7,10 @@ let server = require("../app");
 const mongoose = require("mongoose");
 var Order = require("../model/order");
 var OrderHistory = require("../model/orderHistory");
+var SessionInformation = require("../model/sessionInformation");
 require("dotenv").config();
 
-describe("Test post order API with ask request.", () => {
+describe("createOrderAskLogicTest", () => {
   before(function (done) {
     mongoose.connect(process.env.DB_URL_TEST);
     const db = mongoose.connection;
@@ -23,7 +24,7 @@ describe("Test post order API with ask request.", () => {
   beforeEach(function (done) {
     setTimeout(function () {
       done();
-    }, 500);
+    }, 1000);
   });
 
   describe("Ask logic testing flow:", () => {
@@ -56,6 +57,7 @@ describe("Test post order API with ask request.", () => {
 
     it("Step 2: Ask record should in Order book.", (done) => {
       Order.find({ orderId: askOrderId }, (err, result) => {
+        console.log(result);
         should.equal(result[0].qty, 500);
         should.equal(result[0].price, 120);
         should.equal(result[0].status, "OPEN");
@@ -178,7 +180,7 @@ describe("Test post order API with ask request.", () => {
   });
 
   after(function (done) {
-    Promise.all([Order.deleteMany({}), OrderHistory.deleteMany({})]).then(
+    Promise.all([SessionInformation.deleteMany({}), Order.deleteMany({}), OrderHistory.deleteMany({})]).then(
       (value) => {
         console.log("Cleared all collections");
         return Promise.resolve();

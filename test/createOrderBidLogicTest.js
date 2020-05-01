@@ -9,7 +9,7 @@ var Order = require("../model/order");
 var OrderHistory = require("../model/orderHistory");
 require("dotenv").config();
 
-describe("Test post order API", () => {
+describe("createOrderBIdLogicTest", () => {
   before(function (done) {
     mongoose.connect(process.env.DB_URL_TEST);
     const db = mongoose.connection;

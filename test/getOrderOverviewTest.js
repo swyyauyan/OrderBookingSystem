@@ -7,12 +7,6 @@ const mongoose = require("mongoose");
 var sessionInformation = require("../model/sessionInformation");
 require("dotenv").config();
 
-beforeEach(function (done) {
-  setTimeout(function () {
-    done();
-  }, 500);
-});
-
 before(function (done) {
   mongoose.connect(process.env.DB_URL_TEST);
   const db = mongoose.connection;
@@ -21,9 +15,13 @@ before(function (done) {
     console.log("We are connected to test database!");
     done();
   });
+  Promise.all([sessionInformation.deleteMany({})]).then((value) => {
+    console.log("Cleared all collections");
+    return Promise.resolve();
+  });
 });
 
-describe("Test order overview API", () => {
+describe("getOrderOverviewTest", () => {
   it("Step 0: Get order overview..", () => {
     chai
       .request(server)
@@ -47,7 +45,7 @@ describe("Test order overview API", () => {
         res.should.have.status(200);
         done();
       });
-  });
+  }).timeout(5000);
 
   it("Step 1: Create bid market Order.", (done) => {
     chai
@@ -59,7 +57,7 @@ describe("Test order overview API", () => {
         res.should.have.status(200);
         done();
       });
-  });
+  }).timeout(5000);
 
   it("Step 2: Get Order overview.", () => {
     chai
@@ -78,7 +76,7 @@ describe("Test order overview API", () => {
         res.body.close.should.equal(1);
         // done();
       });
-  });
+  }).timeout(5000);
 
   it("Step 3: Create bid market Order.", (done) => {
     chai
@@ -90,7 +88,7 @@ describe("Test order overview API", () => {
         res.should.have.status(200);
         done();
       });
-  });
+  }).timeout(5000);
 
   it("Step 4: Get Order overview.", () => {
 
@@ -108,7 +106,7 @@ describe("Test order overview API", () => {
         res.body.close.should.equal(2);
         // done();
       });
-  });
+  }).timeout(5000);
 
   after(function (done) {
     Promise.all([sessionInformation.deleteMany({})]).then((value) => {

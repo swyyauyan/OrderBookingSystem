@@ -22,8 +22,8 @@ exports.getOrderById = async function (req, res) {
   await orderBookService.getOrderById(req, res);
 };
 
-exports.createOrder = function (req, res) {
-  res.send(orderCreationService.create(req.body));
+exports.createOrder = async function (req, res) {
+  await orderCreationService.create(req.body, res);
 };
 
 exports.getHistoriesByOrderId = async function (req, res) {
