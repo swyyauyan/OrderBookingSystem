@@ -23,19 +23,19 @@ before(function (done) {
 });
 
 describe("Test order overview API", () => {
-  it("Step 0: Get order overview.", (done) => {
-    chai
-      .request(server)
-      .get("/order/overview")
-      .end((err, res) => {
-        res.should.have.status(200);
-        should.equal(res.body.lstPrc, 0);
-        should.equal(res.body.lstVol, 0);
-        should.equal(res.body.lstTime, "");
-        should.equal(res.body.totalVol, 0);
-        done();
-      });
-  });
+
+  it("Step 0: Get order overview..", (done) => {
+    chai.request(server)
+    .get('/order/overview')
+    .end((err, res) => {
+      res.should.have.status(200);
+      res.body.lstPrc.should.equal(0);
+      res.body.lstVol.should.equal(0);
+      res.body.lstTime.should.equal("");
+      res.body.totalVol.should.equal(0);
+      done();
+    });
+  }).timeout(10000);
 
   it("Step 1: Create ask limit Order.", (done) => {
     chai
@@ -68,14 +68,14 @@ describe("Test order overview API", () => {
       .end((err, res) => {
         console.log(res.body);
         res.should.have.status(200);
-        should.equal(res.body.lstPrc, 120);
-        should.equal(res.body.lstVol, 300);
-        should.not.equal(res.body.lstTime, "");
-        should.equal(res.body.totalVol, 300);
-        should.equal(res.body.high, 120);
-        should.equal(res.body.low, 120);
-        should.equal(res.body.open, 1);
-        should.equal(res.body.close, 1);
+        // should.be.equal(res.body.lstPrc, 120);
+        res.body.lstPrc.should.equal(120);
+        res.body.lstVol.should.equal(300);
+        res.body.totalVol.should.equal(300);
+        res.body.high.should.equal(120);
+        res.body.low.should.equal(120);
+        res.body.open.should.equal(1);
+        res.body.close.should.equal(1);
         done();
       });
   });
@@ -98,14 +98,13 @@ describe("Test order overview API", () => {
       .get("/order/overview")
       .end((err, res) => {
         res.should.have.status(200);
-        should.equal(res.body.lstPrc, 120);
-        should.equal(res.body.lstVol, 100);
-        should.not.equal(res.body.lstTime, "");
-        should.equal(res.body.totalVol, 400);
-        should.equal(res.body.high, 120);
-        should.equal(res.body.low, 120);
-        should.equal(res.body.open, 1);
-        should.equal(res.body.close, 2);
+        res.body.lstPrc.should.equal(120);
+        res.body.lstVol.should.equal(100);
+        res.body.totalVol.should.equal(400);
+        res.body.high.should.equal(120);
+        res.body.low.should.equal(120);
+        res.body.open.should.equal(1);
+        res.body.close.should.equal(2);
         done();
       });
   });
