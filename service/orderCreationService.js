@@ -1,4 +1,5 @@
 var _ = require("lodash");
+var Big = require("big-js");
 var Order = require("../model/order");
 var OrderHistory = require("../model/orderHistory");
 var historyList = require("../model/historyCodeList");
@@ -75,7 +76,10 @@ class OrderCreationService {
   }
 
   checkInterval(id, request, interval) {
-    if (request.price % interval == 0) {
+    console.log(new Big(request.price).mod(new Big(interval)));
+    if (request.type == "MARKET") {
+      return true;
+    } else if (new Big(request.price).mod(new Big(interval)) == 0) {
       return true;
     } else {
       this.createLog(id, 95, request, { interval: interval });

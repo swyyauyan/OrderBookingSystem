@@ -77,6 +77,20 @@ class TradingPhraseService {
     });
   }
 
+
+  async getInterval(res) {
+    await SessionInformation.findOne({ key: "interval" }, async function (
+      err,
+      interval
+    ) {
+      if (interval === null) {
+        res.send("without setting interval price.");
+      } else {
+        res.send(interval.value.toString());
+      }
+    });
+  }
+
   async setInterval(req, res) {
     var intervalInput = req.body.interval;
     await SessionInformation.findOne({ key: "interval" }, async function (
