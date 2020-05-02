@@ -16,3 +16,7 @@ exports.getClosingPrice = async function (req, res) {
 exports.setClosingPrice = async function (req, res) {
   await tradingPhraseService.setClosingPrice(req, res);
 };
+
+exports.setInterval = async function (req, res) {
+  await tradingPhraseService.setInterval(req, res);
+};

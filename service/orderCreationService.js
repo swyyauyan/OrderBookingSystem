@@ -6,28 +6,43 @@ var OrderOverviewService = require("../service/orderOverviewService");
 var orderOverviewService = new OrderOverviewService();
 var SessionInformation = require("../model/sessionInformation");
 
+var DEFAULT_INTERVAL = 1;
+var DEFAULT_TRADING_PHRASE = "Continuous trading";
+
 class OrderCreationService {
   async create(request, res) {
     var id = this.getOrderId();
 
-
     //TO CHECK: HERE IS PROBLEM.
-    var tradingPhrase = "Continuous trading";
+    var tradingPhrase = DEFAULT_TRADING_PHRASE;
     await SessionInformation.findOne({ key: "tradingPhrase" }, async function (
       err,
       phrase
     ) {
-      tradingPhrase = _.get(phrase, "value", "Continuous trading");
+      tradingPhrase = _.get(phrase, "value", DEFAULT_TRADING_PHRASE);
+    });
+
+    var interval = DEFAULT_INTERVAL;
+    await SessionInformation.findOne({ key: "interval" }, async function (
+      err,
+      phrase
+    ) {
+      interval = _.get(phrase, "value", DEFAULT_INTERVAL);
     });
 
     request = this.orderPreHandling(request, tradingPhrase);
-    console.log(request);
 
     var action = _.get(request, "action");
     var type = _.get(request, "type");
 
-    // console.log(tradingPhrase);
-    if (this.orderValidation(action) && this.checkTradingPhrase(id, request)) {
+    console.log("Interval = " + interval);
+    console.log("tradingPhrase = " + tradingPhrase);
+
+    if (
+      this.orderValidation(action) &&
+      this.checkTradingPhrase(id, request) &&
+      this.checkInterval(id, request, interval)
+    ) {
       this.createOrder(request, id);
     } else {
       res.status(400);
@@ -59,6 +74,15 @@ class OrderCreationService {
     return false;
   }
 
+  checkInterval(id, request, interval) {
+    if (request.price % interval == 0) {
+      return true;
+    } else {
+      this.createLog(id, 95, request, { interval: interval });
+      return false;
+    }
+  }
+
   orderPreHandling(request, tradingPhrase) {
     request.action = request.action.toUpperCase();
     request.type = request.type.toUpperCase();
@@ -71,7 +95,7 @@ class OrderCreationService {
     }
 
     // if(!_.has(request, 'tradingPhrase')){
-      request.tradingPhrase = tradingPhrase;
+    request.tradingPhrase = tradingPhrase;
     // }
     return request;
   }
@@ -97,7 +121,7 @@ class OrderCreationService {
       } else {
         this.orderHandling(id, request, openOrders);
       }
-    }else if (
+    } else if (
       request.tradingPhrase == "Pre-opening session - Order Input Period" ||
       request.tradingPhrase == "Pre-opening session - Pre-order matching Period"
     ) {
@@ -226,6 +250,7 @@ class OrderCreationService {
         description: des.description
           .replace("%ORDER_TYPE%", _.get(keyPair, "type", ""))
           .replace("%TRADING_PHRASE%", _.get(keyPair, "tradingPhrase", ""))
+          .replace("%INTERVAL%", _.get(keyPair, "interval", ""))
           .replace("%OTHER_ORDER_ID%", _.get(keyPair, "otherOrderId", "")),
       },
       createAt: Date.now(),
@@ -238,40 +263,6 @@ class OrderCreationService {
   getOrderId() {
     return "_" + Math.random().toString(36).substr(2, 9);
   }
-
-  async getTradingPhrase() {}
-
-  // async canCreateOrder(orderType) {
-  //   console.log("canCreateOrder = ");
-  //   await SessionInformation.findOne({ key: "tradingPhrase" }, async function (
-  //     err,
-  //     phrase
-  //   ) {
-  //     console.log("tradingPhrase = " + phrase);
-  //     if (phrase === null) {
-  //       await new SessionInformation({
-  //         key: "tradingPhrase",
-  //         value: "Continuous trading",
-  //       }).save();
-  //       console.log('1');
-  //       return { 'allow': true };
-  //     } else {
-  //       var tradingPhrase = phrase.value;
-  //       if (
-  //         tradingPhrase == "Continuous trading" ||
-  //         tradingPhrase == "Pre-opening session - Order Input Period" ||
-  //         (tradingPhrase == "Pre-opening session - Pre-order matching Period" &&
-  //           orderType == "MARKET")
-  //       ) {
-  //         console.log('2');
-  //         return true;
-  //       } else {
-  //         console.log('3');
-  //         return { 'allow': false, 'tradingPhrase': tradingPhrase };
-  //       }
-  //     }
-  //   });
-  // }
 }
 
 module.exports = OrderCreationService;

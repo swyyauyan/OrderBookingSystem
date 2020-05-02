@@ -99,12 +99,11 @@ describe("getOrderOverviewTest", () => {
         res.body.low.should.equal(120);
         res.body.open.should.equal(1);
         res.body.close.should.equal(2);
-        // done();
+         done();
       });
-  }).timeout(5000);
+  })
 
   after(function (done) {
-    
     mongoose.connection.db.dropDatabase(function () {
       mongoose.connection.close(done);
     });

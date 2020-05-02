@@ -11,4 +11,6 @@ router.get("/closingPrice", tradingPhraseController.getClosingPrice);
 
 router.post("/closingPrice", tradingPhraseController.setClosingPrice);
 
+router.post("/interval", tradingPhraseController.setInterval);
+
 module.exports = router;

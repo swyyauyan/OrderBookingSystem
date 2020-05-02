@@ -76,6 +76,27 @@ class TradingPhraseService {
       }
     });
   }
+
+  async setInterval(req, res) {
+    var intervalInput = req.body.interval;
+    await SessionInformation.findOne({ key: "interval" }, async function (
+      err,
+      intervalRecord
+    ) {
+      if (intervalRecord === null) {
+        await new SessionInformation({
+          key: "interval",
+          value: intervalInput,
+        }).save(function (err, doc) {
+          res.send("IntervalInput = " + intervalInput);
+        });
+      } else {
+        intervalRecord.value = intervalInput;
+        await intervalRecord.save();
+        res.send("IntervalInput = " + intervalInput);
+      }
+    });
+  }
 }
 
 module.exports = TradingPhraseService;

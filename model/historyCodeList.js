@@ -27,6 +27,10 @@ const historyList = [
     description: "Opreation: Add request to order book.",
   },
   {
+    code: 95,
+    description: "Price doesn't correct, the interval is : %INTERVAL% .",
+  },
+  {
     code: 96,
     description: "Cannot create order in phrase. %TRADING_PHRASE% .",
   },

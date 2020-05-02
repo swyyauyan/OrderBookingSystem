@@ -368,6 +368,43 @@ describe("createOrderBasicTest", () => {
     clearAllData();
   });
 
+  describe("Create order and check interval", () => {
+    it("1. Set interval", (done) => {
+      chai
+        .request(server)
+        .post("/tradingphrase/interval")
+        .send({ interval: 1 })
+        .end((err, res) => {
+          res.should.have.status(200);
+          done();
+        });
+    });
+
+    it("2. create order with wrong interval", (done) => {
+      chai
+        .request(server)
+        .post("/order")
+        .send({ action: "BID", type: "limit", qty: 1, price: 2.3 })
+        .end((err, res) => {
+          res.should.have.status(400);
+          done();
+        });
+    }).timeout(2000);
+
+    it("3. create order with correct interval", (done) => {
+      chai
+        .request(server)
+        .post("/order")
+        .send({ action: "BID", type: "market", qty: 1, price: 400 })
+        .end((err, res) => {
+          res.should.have.status(200);
+          done();
+        });
+    }).timeout(2000);
+    clearAllData();
+  });
+
+
   function clearAllData() {
     Promise.all([SessionInformation.deleteMany({}), Order.deleteMany({}), OrderHistory.deleteMany({})]).then(
       (value) => {

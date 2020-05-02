@@ -24,6 +24,10 @@
      {
         "name":"Order History",
         "description":""
+     },
+     {
+      "name":"Trading Phrase",
+      "description":""
      }
   ],
   "schemes":[
@@ -146,7 +150,46 @@
               }
            }
         }
-     }
+     },
+     "/tradingPhrase":{
+      "get":{
+         "tags":[
+            "Trading Phrase"
+         ],
+         "summary":"get Trading Phrase",
+         "description":"get Trading Phrase",
+         "operationId":"getTradingPhrase",
+         "responses":{
+            "200":{
+               "description":"Get trading phrase successful."
+            }
+         }
+      },
+      "post":{
+         "tags":[
+            "Trading Phrase"
+         ],
+         "summary":"Set Trading Phrase",
+         "description":"set Trading Phrase",
+         "operationId":"setTradingPhrase",
+         "parameters":[
+            {
+               "in":"body",
+                  "name":"Order request body",
+                  "description":"Created order request",
+                  "required":true,
+                  "schema":{
+                     "$ref":"#/definitions/TradingPhrase"
+                  }
+            }
+         ],
+         "responses":{
+            "200":{
+               "description":"Set trading phrase successful."
+            }
+         }
+      }
+   }
   },
   "definitions":{
      "Order":{
@@ -361,6 +404,21 @@
               }
            }
         }
-     }
+     },
+     "TradingPhrase":{
+      "type":"object",
+      "properties":{
+      "tradingPhrase":{
+         "type":"string",
+         "enum":[
+            "Pre-opening session - Order Input Period",
+            "Pre-opening session - Pre-order matching Period",
+            "Pre-opening session - Order matching Period",
+            "Pre-opening session - Blocking Period",
+            "Continuous trading"
+         ]
+      }
+   }
+}
   }
 }
