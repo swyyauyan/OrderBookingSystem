@@ -1,6 +1,9 @@
 var _ = require("lodash");
 var SessionInformation = require("../model/sessionInformation");
 
+var IepService = require("./iepService");
+var iepService = new IepService();
+
 const DEFAULT_TRADING_PHRASE = "Continuous trading";
 
 class TradingPhraseService {
@@ -15,9 +18,9 @@ class TradingPhraseService {
           value: DEFAULT_TRADING_PHRASE,
         }).save();
 
-        res.send (DEFAULT_TRADING_PHRASE);
+        res.send(DEFAULT_TRADING_PHRASE);
       } else {
-        res.send ( tradingPhrase.value);
+        res.send(tradingPhrase.value);
       }
     });
   }
@@ -32,15 +35,18 @@ class TradingPhraseService {
         await new SessionInformation({
           key: "tradingPhrase",
           value: tradingPhraseInput,
-        }).save(function (err, doc) {
-          res.send("Trading phrase = " + tradingPhraseInput);
-        });
+        }).save(function (err, doc) {});
       } else {
         tradingPhrase.value = tradingPhraseInput;
         await tradingPhrase.save();
-        res.send("Trading phrase = " + tradingPhrase.value);
       }
     });
+    //TODO: HERE
+    if(tradingPhraseInput === 'Pre-opening session - Order matching Period' ){
+      console.log('Set iep.');
+      await iepService.setIep();
+    }
+    res.send("Trading phrase = " + tradingPhraseInput);
   }
 
   async getClosingPrice(res) {
@@ -76,7 +82,6 @@ class TradingPhraseService {
       }
     });
   }
-
 
   async getInterval(res) {
     await SessionInformation.findOne({ key: "interval" }, async function (

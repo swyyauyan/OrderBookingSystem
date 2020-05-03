@@ -7,10 +7,7 @@ var DEFAULT_TRADING_PHRASE = "Continuous trading";
 
 class IepService {
   async getValue(res) {
-    //STEP 1: Re - calculate "Possible IEP list."
-    //"Pre-opening session - Order Input Period",
-    // "Pre-opening session - Pre-order matching Period",
-
+  
     var tradingPhrase = DEFAULT_TRADING_PHRASE;
     //CHECK
     await SessionInformation.findOne({ key: "tradingPhrase" }, async function (
@@ -27,23 +24,20 @@ class IepService {
       var possibleIep = await this.getPossibleIep();
       res.send(possibleIep);
     } else {
-        res.send('NOT IMPLEMENT IN PHRASE = ' + tradingPhrase);
+      var iepValue;
+      await SessionInformation.findOne({ key: "iepValue" }, async function (
+        err,
+        phrase
+      ) {
+        iepValue = _.get(phrase, "value", "");
+      });
+
+      res.send("IEP = " + iepValue);
     }
-
-    //STEP 2: When set trading phrase to "Pre-opening session - Order matching Period"
-    //Recalcurate the IEP value (Iep) and store in database.
-
-    //STEP 3: Get from database
-    //"Pre-opening session - Order matching Period"
-    //"Pre-opening session - Blocking Period",
-    // "Continuous trading"
   }
 
   async getPossibleResult(res) {
-    //STEP 1: Re - calculate "Possible IEP posiible result."
-    //"Pre-opening session - Order Input Period",
-    // "Pre-opening session - Pre-order matching Period",
-
+   
     var tradingPhrase = DEFAULT_TRADING_PHRASE;
     await SessionInformation.findOne({ key: "tradingPhrase" }, async function (
       err,
@@ -59,21 +53,20 @@ class IepService {
       var possibleResult = await this.getPossibleIepResults();
       res.send(possibleResult);
     } else {
-        res.send('NOT IMPLEMENT IN PHRASE = ' + tradingPhrase);
+        var iepResult;
+        await SessionInformation.findOne({ key: "iepPossibleResult" }, async function (
+          err,
+          phrase
+        ) {
+            iepResult = _.get(phrase, "value", "");
+        });
+  
+        res.send(JSON.stringify(iepResult));
     }
-    //STEP 2: When set trading phrase to "Pre-opening session - Order matching Period"
-    //Recalcurate the IEP possible table (IepPossibleResult) and store in database.
-    //STEP 3: Get from database
-    //"Pre-opening session - Order matching Period"
-    //"Pre-opening session - Blocking Period",
-    // "Continuous trading"
   }
 
   async getTradeResult(res) {
-    //STEP 1: Re - calculate "Possible IEP posiible trade."
-    //"Pre-opening session - Order Input Period",
-    // "Pre-opening session - Pre-order matching Period",
-
+    
     var tradingPhrase = DEFAULT_TRADING_PHRASE;
     await SessionInformation.findOne({ key: "tradingPhrase" }, async function (
       err,
@@ -95,15 +88,17 @@ class IepService {
       }
       res.send(tradeResults);
     } else {
-        res.send('NOT IMPLEMENT IN PHRASE = ' + tradingPhrase);
+        var iepTrade;
+        await SessionInformation.findOne({ key: "iepTrade" }, async function (
+          err,
+          phrase
+        ) {
+            iepTrade = _.get(phrase, "value", "");
+        });
+  
+        res.send(JSON.stringify(iepTrade));
     }
-    //STEP 2: When set trading phrase to "Pre-opening session - Order matching Period"
-    //Recalcurate the IEP possible trade (IepPossibleTrade) and store in database.
-
-    //STEP 3: Get from database
-    //"Pre-opening session - Order matching Period"
-    //"Pre-opening session - Blocking Period",
-    // "Continuous trading"
+   
   }
 
   async getTradeTable(iepResult) {
@@ -236,6 +231,91 @@ class IepService {
       accBidList: accBidList,
       accAskList: accAskList,
     };
+  }
+
+  async setIep() {
+    var possibleResult = await this.getPossibleIepResults();
+
+    //STEP 1: Found the highest Iep => Maybe highest IEP > 1
+    var iep = await this.getMaxIep(possibleResult);
+
+    //STEP 2: Store the highest Iep result in database and the trade table
+
+    await this.saveIep(iep);
+
+    //STEP 3: Do trade using the highest Iep
+    //STEP 4: Check the order table.
+  }
+
+  async getMaxIep(possibleResult) {
+    var highestShared = 0;
+
+    possibleResult.forEach((result) => {
+      if (result.matchedShared > highestShared) {
+        highestShared = result.matchedShared;
+      }
+    });
+
+    var possibleMaxIeps = _.remove(possibleResult, function (result) {
+      return result.matchedShared == highestShared;
+    });
+
+    if (possibleMaxIeps.length == 1) {
+      return possibleMaxIeps[0];
+    } else {
+      //RULE 2, 3, 4 is here
+      return {};
+    }
+  }
+
+  async saveIep(maxIep) {
+    var iepValue = _.get(maxIep, "iep", "");
+
+    await SessionInformation.findOne({ key: "iepValue" }, async function (
+      err,
+      oldIep
+    ) {
+      if (oldIep === null) {
+        await new SessionInformation({
+          key: "iepValue",
+          value: iepValue,
+        }).save();
+      } else {
+        oldIep.value = iepValue;
+        oldIep.save();
+      }
+    });
+
+    await SessionInformation.findOne(
+      { key: "iepPossibleResult" },
+      async function (err, oldIepPossibleResult) {
+        if (oldIepPossibleResult === null) {
+          await new SessionInformation({
+            key: "iepPossibleResult",
+            value: maxIep,
+          }).save();
+        } else {
+          oldIepPossibleResult.value = maxIep;
+          oldIepPossibleResult.save();
+        }
+      }
+    );
+
+    var trade = await this.getTradeTable(maxIep);
+    await SessionInformation.findOne({ key: "iepTrade" }, async function (
+      err,
+      oldIepPossibleResult
+    ) {
+      if (oldIepPossibleResult === null) {
+        await new SessionInformation({
+          key: "iepTrade",
+          value: trade,
+        }).save();
+      } else {
+        oldIepPossibleResult.value = trade;
+        oldIepPossibleResult.save();
+      }
+    });
   }
 }
 module.exports = IepService;
