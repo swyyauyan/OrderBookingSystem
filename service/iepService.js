@@ -3,15 +3,32 @@ var Order = require("../model/order");
 var SessionInformation = require("../model/sessionInformation");
 
 var DEFAULT_INTERVAL = 1;
+var DEFAULT_TRADING_PHRASE = "Continuous trading";
+
 class IepService {
   async getValue(res) {
     //STEP 1: Re - calculate "Possible IEP list."
     //"Pre-opening session - Order Input Period",
     // "Pre-opening session - Pre-order matching Period",
 
-    var possibleIep = await this.getPossibleIep();
+    var tradingPhrase = DEFAULT_TRADING_PHRASE;
+    //CHECK
+    await SessionInformation.findOne({ key: "tradingPhrase" }, async function (
+      err,
+      phrase
+    ) {
+      tradingPhrase = _.get(phrase, "value", DEFAULT_TRADING_PHRASE);
+    });
 
-    res.send(possibleIep);
+    if (
+      tradingPhrase == "Pre-opening session - Order Input Period" ||
+      tradingPhrase == "Pre-opening session - Pre-order matching Period"
+    ) {
+      var possibleIep = await this.getPossibleIep();
+      res.send(possibleIep);
+    } else {
+        res.send('NOT IMPLEMENT IN PHRASE = ' + tradingPhrase);
+    }
 
     //STEP 2: When set trading phrase to "Pre-opening session - Order matching Period"
     //Recalcurate the IEP value (Iep) and store in database.
@@ -27,9 +44,23 @@ class IepService {
     //"Pre-opening session - Order Input Period",
     // "Pre-opening session - Pre-order matching Period",
 
-    var possibleResult = await this.getPossibleIepResults();
-    res.send(possibleResult);
+    var tradingPhrase = DEFAULT_TRADING_PHRASE;
+    await SessionInformation.findOne({ key: "tradingPhrase" }, async function (
+      err,
+      phrase
+    ) {
+      tradingPhrase = _.get(phrase, "value", DEFAULT_TRADING_PHRASE);
+    });
 
+    if (
+      tradingPhrase == "Pre-opening session - Order Input Period" ||
+      tradingPhrase == "Pre-opening session - Pre-order matching Period"
+    ) {
+      var possibleResult = await this.getPossibleIepResults();
+      res.send(possibleResult);
+    } else {
+        res.send('NOT IMPLEMENT IN PHRASE = ' + tradingPhrase);
+    }
     //STEP 2: When set trading phrase to "Pre-opening session - Order matching Period"
     //Recalcurate the IEP possible table (IepPossibleResult) and store in database.
     //STEP 3: Get from database
@@ -42,15 +73,30 @@ class IepService {
     //STEP 1: Re - calculate "Possible IEP posiible trade."
     //"Pre-opening session - Order Input Period",
     // "Pre-opening session - Pre-order matching Period",
-    var tradeResults = [];
-    var possibleResult = await this.getPossibleIepResults();
 
-    for(const result of possibleResult){
+    var tradingPhrase = DEFAULT_TRADING_PHRASE;
+    await SessionInformation.findOne({ key: "tradingPhrase" }, async function (
+      err,
+      phrase
+    ) {
+      tradingPhrase = _.get(phrase, "value", DEFAULT_TRADING_PHRASE);
+    });
+
+    if (
+      tradingPhrase == "Pre-opening session - Order Input Period" ||
+      tradingPhrase == "Pre-opening session - Pre-order matching Period"
+    ) {
+      var tradeResults = [];
+      var possibleResult = await this.getPossibleIepResults();
+
+      for (const result of possibleResult) {
         var trade = await this.getTradeTable(result);
-        tradeResults.push({'iep': result.iep, 'trade': trade});
+        tradeResults.push({ iep: result.iep, trade: trade });
+      }
+      res.send(tradeResults);
+    } else {
+        res.send('NOT IMPLEMENT IN PHRASE = ' + tradingPhrase);
     }
-    res.send(tradeResults);
-
     //STEP 2: When set trading phrase to "Pre-opening session - Order matching Period"
     //Recalcurate the IEP possible trade (IepPossibleTrade) and store in database.
 
@@ -182,7 +228,6 @@ class IepService {
 
     var matchedShared = Math.min(accBidQty, accAskQty);
 
-
     return {
       iep: iep,
       accBidQty: accBidQty,
@@ -192,6 +237,5 @@ class IepService {
       accAskList: accAskList,
     };
   }
-
 }
 module.exports = IepService;
