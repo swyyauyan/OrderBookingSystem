@@ -1,5 +1,6 @@
 var _ = require("lodash");
 var Order = require("../model/order");
+var OrderHistory = require("../model/orderHistory");
 var SessionInformation = require("../model/sessionInformation");
 
 var DEFAULT_INTERVAL = 1;
@@ -7,7 +8,6 @@ var DEFAULT_TRADING_PHRASE = "Continuous trading";
 
 class IepService {
   async getValue(res) {
-  
     var tradingPhrase = DEFAULT_TRADING_PHRASE;
     //CHECK
     await SessionInformation.findOne({ key: "tradingPhrase" }, async function (
@@ -37,7 +37,6 @@ class IepService {
   }
 
   async getPossibleResult(res) {
-   
     var tradingPhrase = DEFAULT_TRADING_PHRASE;
     await SessionInformation.findOne({ key: "tradingPhrase" }, async function (
       err,
@@ -53,20 +52,19 @@ class IepService {
       var possibleResult = await this.getPossibleIepResults();
       res.send(possibleResult);
     } else {
-        var iepResult;
-        await SessionInformation.findOne({ key: "iepPossibleResult" }, async function (
-          err,
-          phrase
-        ) {
-            iepResult = _.get(phrase, "value", "");
-        });
-  
-        res.send(JSON.stringify(iepResult));
+      var iepResult;
+      await SessionInformation.findOne(
+        { key: "iepPossibleResult" },
+        async function (err, phrase) {
+          iepResult = _.get(phrase, "value", "");
+        }
+      );
+
+      res.send(JSON.stringify(iepResult));
     }
   }
 
   async getTradeResult(res) {
-    
     var tradingPhrase = DEFAULT_TRADING_PHRASE;
     await SessionInformation.findOne({ key: "tradingPhrase" }, async function (
       err,
@@ -88,17 +86,16 @@ class IepService {
       }
       res.send(tradeResults);
     } else {
-        var iepTrade;
-        await SessionInformation.findOne({ key: "iepTrade" }, async function (
-          err,
-          phrase
-        ) {
-            iepTrade = _.get(phrase, "value", "");
-        });
-  
-        res.send(JSON.stringify(iepTrade));
+      var iepTrade;
+      await SessionInformation.findOne({ key: "iepTrade" }, async function (
+        err,
+        phrase
+      ) {
+        iepTrade = _.get(phrase, "value", "");
+      });
+
+      res.send(JSON.stringify(iepTrade));
     }
-   
   }
 
   async getTradeTable(iepResult) {
@@ -106,33 +103,37 @@ class IepService {
     var askList = iepResult.accAskList;
     var bidList = iepResult.accBidList;
 
+    var remainedShared = iepResult.matchedShared;
     bidList.forEach((bid) => {
-      var bidQty = bid.qty;
-      console.log(bidQty);
-      for (var i = 0; i < askList.length; i++) {
-        if (bidQty > 0) {
-          if (bidQty >= askList[i].qty) {
-            bidQty = bidQty - askList[i].qty;
-            tradeResults.push({
-              buyId: bid.orderId,
-              TradeGenrated: iepResult.iep + "@" + askList[i].qty,
-              askId: askList[i].orderId,
-            });
-            askList[i].qty = 0;
-          } else {
-            askList[i].qty = askList[i].qty - bidQty;
-            tradeResults.push({
-              buyId: bid.orderId,
-              TradeGenrated: iepResult.iep + "@" + bidQty,
-              askId: askList[i].orderId,
-            });
-            bidQty = 0;
+      if (remainedShared > 0) {
+        var bidQty = bid.qty;
+        for (var i = 0; i < askList.length; i++) {
+          if (bidQty > 0) {
+            if (bidQty >= askList[i].qty) {
+              bidQty = bidQty - askList[i].qty;
+              remainedShared = remainedShared - askList[i].qty;
+              tradeResults.push({
+                buyId: bid.orderId,
+                TradeGenrated: askList[i].qty,
+                askId: askList[i].orderId,
+              });
+              askList[i].qty = 0;
+            } else {
+              askList[i].qty = askList[i].qty - bidQty;
+              remainedShared = remainedShared - bidQty;
+              tradeResults.push({
+                buyId: bid.orderId,
+                TradeGenrated: bidQty,
+                askId: askList[i].orderId,
+              });
+              bidQty = 0;
+            }
           }
-        }
 
-        askList = _.remove(askList, function (ask) {
-          return ask.qty != 0;
-        });
+          askList = _.remove(askList, function (ask) {
+            return ask.qty != 0;
+          });
+        }
       }
     });
     return tradeResults;
@@ -184,7 +185,6 @@ class IepService {
         iep = iep + interval
       ) {
         possibleIep.push(iep);
-        console.log("Possible iep = " + iep);
       }
       return possibleIep;
     }
@@ -223,11 +223,14 @@ class IepService {
 
     var matchedShared = Math.min(accBidQty, accAskQty);
 
+    var normalOrderImbalance = Math.max(accBidQty, accAskQty) - matchedShared;
+
     return {
       iep: iep,
       accBidQty: accBidQty,
       accAskQty: accAskQty,
       matchedShared: matchedShared,
+      normalOrderImbalance: normalOrderImbalance,
       accBidList: accBidList,
       accAskList: accAskList,
     };
@@ -237,14 +240,52 @@ class IepService {
     var possibleResult = await this.getPossibleIepResults();
 
     //STEP 1: Found the highest Iep => Maybe highest IEP > 1
-    var iep = await this.getMaxIep(possibleResult);
-
     //STEP 2: Store the highest Iep result in database and the trade table
 
-    await this.saveIep(iep);
+    await this.saveIep(await this.getMaxIep(possibleResult));
 
     //STEP 3: Do trade using the highest Iep
+    await this.doTrade(await this.getMaxIep(possibleResult));
     //STEP 4: Check the order table.
+  }
+
+  async doTrade(maxIep) {
+    var trade = await this.getTradeTable(maxIep);
+    for (const obj of trade) {
+      await Order.findOne({ orderId: obj.buyId }, async function (err, bid) {
+        console.log(
+          "bid.qty = bid.qty - trade.TradeGenrated => " +
+            "bid.qty = " +
+            bid.qty +
+            " ; trade.TradeGenrated = " +
+            obj.TradeGenrated
+        );
+        bid.qty = bid.qty - obj.TradeGenrated;
+        await bid.save();
+        //ADD LOG
+      });
+
+      await Order.findOne({ orderId: obj.askId }, async function (err, ask) {
+        console.log(
+          "ask.qty = ask.qty - trade.TradeGenrated => " +
+            "ask.qty = " +
+            ask.qty +
+            " ; trade.TradeGenrated = " +
+            obj.TradeGenrated
+        );
+        ask.qty = ask.qty - obj.TradeGenrated;
+        await ask.save();
+        //ADD LOG
+      });
+    }
+
+    await Order.find({}, function (err, orders) {
+      orders.forEach(async (order) => {
+        if (order.qty == 0) {
+          await order.remove();
+        }
+      });
+    });
   }
 
   async getMaxIep(possibleResult) {
@@ -262,13 +303,55 @@ class IepService {
 
     if (possibleMaxIeps.length == 1) {
       return possibleMaxIeps[0];
-    } else {
-      //RULE 2, 3, 4 is here
-      return {};
+    } else if (possibleMaxIeps.length > 1) {
+      //RULE 2
+      var iepNormalOrderImbalance =  await this.getIepByNormalOrderImbalance(possibleMaxIeps);
+      
+      if(iepNormalOrderImbalance.length == 1){
+          console.log('Rule 2: iepNormalOrderImbalance = ' + JSON.stringify(iepNormalOrderImbalance));
+        return iepNormalOrderImbalance[0];
+      } else if(iepNormalOrderImbalance.length > 1){
+
+        var lowerPrice = _.maxBy(iepNormalOrderImbalance, 'iep');
+        var highestPrice = _.maxBy(iepNormalOrderImbalance, 'iep');
+
+          console.log('lowerPrice = ' + JSON.stringify(lowerPrice));
+          console.log('highestPrice = ' + JSON.stringify(highestPrice));
+
+          if(iepNormalOrderImbalance[0].accBidQty > iepNormalOrderImbalance[0].accAskQty){
+            console.log('Rule 3: accBidQty > acc Ask Qty');
+            return highestPrice;
+          }else if(iepNormalOrderImbalance[0].accBidQty < iepNormalOrderImbalance[0].accAskQty){
+            console.log('Rule 3: accBidQty < acc Ask Qty');
+           return lowerPrice;
+          }else{
+              //rule 4
+              return {};
+          }
+      }
     }
   }
 
+  async getIepByNormalOrderImbalance(possibleMaxIeps) {
+    var lowerImbalance = possibleMaxIeps[0].normalOrderImbalance;
+    
+    possibleMaxIeps.forEach((result) => {
+      if (lowerImbalance < _.get(result,'normalOrderImbalance')) {
+        lowerImbalance = result.normalOrderImbalance;
+      }
+    });
+
+    console.log('lowerImbalance = ' + lowerImbalance);
+
+    var possibleMaxIeps = _.remove(possibleMaxIeps, function (result) {
+      return result.normalOrderImbalance == lowerImbalance;
+    });
+
+    return possibleMaxIeps; // If more than one here, need to use rule 3.
+  }
+
   async saveIep(maxIep) {
+    console.log("Save IEP = " + JSON.stringify(maxIep));
     var iepValue = _.get(maxIep, "iep", "");
 
     await SessionInformation.findOne({ key: "iepValue" }, async function (
