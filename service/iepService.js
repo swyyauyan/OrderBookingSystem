@@ -289,6 +289,7 @@ class IepService {
   }
 
   async getMaxIep(possibleResult) {
+    //Rule 1:
     var highestShared = 0;
 
     possibleResult.forEach((result) => {
@@ -325,8 +326,20 @@ class IepService {
             console.log('Rule 3: accBidQty < acc Ask Qty');
            return lowerPrice;
           }else{
-              //rule 4
-              return {};
+              var lastClosingPrice = 0;
+              await SessionInformation.findOne({ key: "closingPrice" }, async function (
+                err,
+                phrase
+              ) {
+                lastClosingPrice = _.get(phrase, "value");
+              });
+
+              if(lastClosingPrice === 0){
+                return highestPrice;
+              } else{
+                  //find a closed number in the list with the closing price.
+                  return {};
+              }
           }
       }
     }
