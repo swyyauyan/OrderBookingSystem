@@ -337,8 +337,8 @@ class IepService {
               if(lastClosingPrice === 0){
                 return highestPrice;
               } else{
-                  //find a closed number in the list with the closing price.
-                  return {};
+                  //TODO: find a closed number in the list with the closing price.
+                  return highestPrice; //TODO
               }
           }
       }
