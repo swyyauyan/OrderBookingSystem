@@ -27,6 +27,10 @@ const historyList = [
     description: "Opreation: Add request to order book.",
   },
   {
+    code: 11,
+    description: "Opreation: Order trading in Order matching Period. Stock = %STOCK% with related order = %OTHER_ORDER_ID%",
+  },
+  {
     code: 95,
     description: "Price doesn't correct, the interval is : %INTERVAL% .",
   },
