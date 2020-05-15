@@ -27,6 +27,7 @@ class TradingPhraseService {
 
   async set(req, res) {
     var tradingPhraseInput = req.body.tradingPhrase;
+    console.log('tradingPhrase = ' + tradingPhraseInput);
     await SessionInformation.findOne({ key: "tradingPhrase" }, async function (
       err,
       tradingPhrase
@@ -98,6 +99,7 @@ class TradingPhraseService {
 
   async setInterval(req, res) {
     var intervalInput = req.body.interval;
+    console.log('setInterval: input value = ' + intervalInput);
     await SessionInformation.findOne({ key: "interval" }, async function (
       err,
       intervalRecord

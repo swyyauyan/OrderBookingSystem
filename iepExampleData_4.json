@@ -27,7 +27,7 @@
         "action" : "BID",
         "type" : "LIMIT",
         "qty" : 5000,
-        "price" : 64.25,
+        "price" : 64,
         "status" : "OPEN",
         "createAt" : ISODate("2020-05-12T19:41:49.337Z"),
         "__v" : 0
@@ -38,7 +38,7 @@
         "action" : "BID",
         "type" : "LIMIT",
         "qty" : 2000,
-        "price" : 64.25,
+        "price" : 63.75,
         "status" : "OPEN",
         "createAt" : ISODate("2020-05-12T19:41:53.728Z"),
         "__v" : 0

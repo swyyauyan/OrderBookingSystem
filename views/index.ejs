@@ -1,11 +1,160 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <style>
+    body{
+      margin: 0px;
+    }
+    #header{
+      width: 100%; 
+      float:left; 
+      background-color: lightblue;
+      padding: 10px;
+    }
+    #main_body{
+      width: 100%;
+    }
+
+    #order_overview{
+      width: 100%;
+      text-align:center;
+    }
+    #trading_information{
+      float:left;
+      width: 30%;
+      height: 100%;
+      border-right: 1px solid black;
+    }
+    #order_book_col{
+      float:right;
+      width: 65%;
+    }
+    #order_overview_table{
+      width: 100%;
+      border: 1px solid black;   
+    }
+    #order_overview_table td{
+      width:12.5%;
+      border: 1px solid black;   
+    }
+
+    #order_book_table_bid{
+      float: left;
+      width: 45%;
+      text-align: center;
+      border: 1px solid black; 
+    }
+
+    #order_book_table_bid td{
+      border: 1px solid black; 
+    }
+
+    #order_book_table_ask{
+      width: 45%;
+      text-align: center;
+      border: 1px solid black; 
+    }
+
+    #order_book_table_ask td{
+      border: 1px solid black; 
+    }
+    
+    </style>
+
     <title><%= title %></title>
-    <link rel='stylesheet' href='/stylesheets/style.css' />
+    <div id = 'header'>
+      <h2><%= title %></h2>
+    </div>
   </head>
   <body>
-    <h1><%= title %></h1>
-    <p>Welcome to <%= title %></p>
+    <div id = 'main_body'>
+    <hr>
+      <div id = 'order_overview'>
+        <table id = 'order_overview_table'>
+          <tr>
+            <td>lstPrc</td>
+            <td>lstVol</td>
+            <td>lstTime</td>
+            <td>totalVol</td>
+            <td>high</td>
+            <td>low</td>
+            <td>open</td>
+            <td>close</td>
+          </tr>
+          <tr>
+            <td><%= orderOverview.value.lstPrc %></td>
+            <td><%= orderOverview.value.lstVol %></td>
+            <td><%= orderOverview.value.lstTime %></td>
+            <td><%= orderOverview.value.totalVol %></td>
+            <td><%= orderOverview.value.high %></td>
+            <td><%= orderOverview.value.low %></td>
+            <td><%= orderOverview.value.open %></td>
+            <td><%= orderOverview.value.close %></td>
+          </tr>
+        </table>
+      <hr>
+      </div><!-- order_overview -->
+      <div id = 'trading_information'>
+        <h3>- Trading information -</h3>
+        <p><b>Trading Phrase:</b> <a href="http://localhost:3000/edit/tradingPhrase"><button>Edit</button></a></p>
+        <p><%= tradingPhrase.value %></p>
+        <p><b>Price interval:</b> <a href="http://localhost:3000/edit/interval"><button>Edit</button></a></p>
+        <p><%= interval.value %></p>
+
+        <!--<p><b>Yesterday closing price:</b></p>-->
+        <br>
+        <h3>- IEP -</h3>
+
+        <p><b>Possible Iep / Today Iep:</b></p>
+        <p><%= iepValue.value %></p>
+      </div><!-- trading_information -->
+      <div id = 'order_book_col'>
+        <h3>- Order Book -</h3>
+        <a href="http://localhost:3000/create/order"><button>Create Order</button></a>
+        <br><br>
+        <div id = 'order_book_div'>
+        <table id = 'order_book_table_bid'>
+          <tr>
+            <td colspan="4">Bid</td>
+          </tr>
+          <tr>
+            <td>ID</td>
+            <td>Bid</td>
+            <td>Size</td>
+            <td>Time</td>
+          </tr>
+          <% for(var i=0; i<bidOrderBook.length; i++) {%>
+          <tr>
+            <td><a href="http://localhost:3000/get/order/<%= bidOrderBook[i].orderId %>"><%= bidOrderBook[i].orderId %></a></td>
+            <td><%= bidOrderBook[i].price %></td>
+            <td><%= bidOrderBook[i].qty %></td>
+            <td><%= bidOrderBook[i].createAt %></td>
+          </tr>
+          <% } %>
+        </table>
+
+        <table id = 'order_book_table_ask'>
+          <tr>
+            <td colspan="4">Ask</td>
+          </tr>
+          <tr>
+            <td>ID</td>
+            <td>Ask</td>
+            <td>Size</td>
+            <td>Time</td>
+          </tr>
+          <% for(var i=0; i<askOrderBook.length; i++) {%>
+            <tr>
+              <td><%= askOrderBook[i].orderId %></td>
+              <td><%= askOrderBook[i].price %></td>
+              <td><%= askOrderBook[i].qty %></td>
+              <td><%= askOrderBook[i].createAt %></td>
+            </tr>
+            <% } %>
+        </table>
+
+        </div> <!-- order_book_div-->
+      </div><!-- order_book_col -->
+      </div><!-- main+body-->
   </body>
 </html>

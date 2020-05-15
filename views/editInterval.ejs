@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <style>
+    body {
+      margin: 0px;
+    }
+
+    #header {
+      width: 100%;
+      float: left;
+      background-color: lightblue;
+      padding: 10px;
+    }
+
+    #main_body {
+      width: 100%;
+      padding: 30px;
+    }
+  </style>
+
+  <title><%= title %></title>
+  <div id='header'>
+    <h2><%= title %></h2>
+  </div>
+
+  <script>
+  function submitInterval(){
+    // fetch('http://localhost:3000/tradingPhrase/interval', {
+    //             method: 'POST',
+    //             headers : new Headers(),
+    // //             body:JSON.stringify({ interval: document.getElementById('new_interval').value })
+    //         }).then((res) => res.json())
+    //         .then((data) =>  console.log(data))
+    //         // .catch((err)=>console.log(err))
+  }
+  </script>
+
+
+</head>
+
+<body>
+  <div id='main_body'>
+    <br><br>
+    Current Interval: <%= interval.value%>
+    <br><br>
+    New Interval: <input type="string" id="new_interval" name="new_interval">
+    <br><br>
+    <button onclick="submitInterval()">Submit</button>
+  </div><!-- main+body-->
+</body>
+
+</html>

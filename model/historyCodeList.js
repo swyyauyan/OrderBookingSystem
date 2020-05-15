@@ -28,7 +28,7 @@ const historyList = [
   },
   {
     code: 11,
-    description: "Opreation: Order trading in Order matching Period. Stock = %STOCK% with related order = %OTHER_ORDER_ID%",
+    description: "Opreation: Order trading in Order matching Period. Reduced Stock = %STOCK% with related order = %OTHER_ORDER_ID%",
   },
   {
     code: 95,
