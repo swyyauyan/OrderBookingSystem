@@ -53,6 +53,10 @@ class OrderOverviewService {
   }
 
   async updateLastRecord(price, qty){
+    var totalOrders = (await OrderHistory.distinct("orderId")).length;
+    var askOrders = await Order.find({ action: "ASK" });
+    var bidOrders = await Order.find({ action: "BID" });
+
     await SessionInformation.findOne({"key" : "orderOverview"}, async function (err, overview) {
         if(overview === null){
             await new SessionInformation({
@@ -63,7 +67,9 @@ class OrderOverviewService {
                 lstTime: new Date().toString(),
                 totalVol: qty,
                 high: price, 
-                low: price
+                low: price,
+                open: askOrders.length + bidOrders.length,
+                close: totalOrders - (askOrders.length + bidOrders.length)
                 }
             }).save();
         }else{
@@ -73,7 +79,9 @@ class OrderOverviewService {
                 lstTime: new Date().toString(),
                 totalVol: (overview.value.totalVol + qty),
                 high: overview.value.high < price ? price : overview.value.high,
-                low: overview.value.low > price ? price : overview.value.low
+                low: overview.value.low > price ? price : overview.value.low,
+                open: askOrders.length + bidOrders.length,
+                close: totalOrders - (askOrders.length + bidOrders.length)
             }
             overview.value = value;
             await overview.save(function (err, overview) {

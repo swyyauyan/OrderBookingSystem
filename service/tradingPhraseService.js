@@ -4,7 +4,7 @@ var SessionInformation = require("../model/sessionInformation");
 var IepService = require("./iepService");
 var iepService = new IepService();
 
-const DEFAULT_TRADING_PHRASE = "Continuous trading";
+const DEFAULT_TRADING_PHRASE = "Pre-opening session - Order Input Period";
 
 class TradingPhraseService {
   async get(res) {

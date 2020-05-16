@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+    body{
+      margin: 0px;
+    }
+    #header{
+      width: 100%; 
+      float:left; 
+      background-color: lightblue;
+      padding: 10px;
+    }
+    #main_body{
+      padding-left: 30px;
+      width: 100%;
+    }
+    
+
+    #iep_information_table, #iep_trade_table{
+      width: 100%;
+      border: 1px solid black;   
+    }
+    #iep_information_table td, #iep_trade_table td{
+      width:12.5%;
+      border: 1px solid black;   
+    }
+    </style>
+
+    <title><%= title %></title>
+    <div id = 'header'>
+      <h2><a href="http://localhost:3000"><%= title %></a></h2>
+    </div>
+  </head>
+  <body>
+    <div id = 'main_body'>
+    <br>
+      <h2>Get Iep details</h2>
+
+      <h4>Iep Information</h4>
+      <table id = "iep_information_table">
+        <tr>
+            <td>IEP</td>
+            <td>Acc. Bid Qty</td>
+            <td>Acc. Ask Qty</td>
+            <td>Matched Shared</td>
+        </tr>
+        <tr>
+            <td><%=iep%></td>
+            <td><%=iepResult.accBidQty%></td>
+            <td><%=iepResult.accAskQty%></td>
+            <td><%=iepResult.matchedShared%></td>
+        </tr>
+      </table>
+        
+      <h4>Iep Trade</h4>
+
+      <table id = "iep_trade_table">
+        <tr>
+            <td>Buying ID</td>
+            <td>Trades Genrated</td>
+            <td>Asking ID</td>
+        </tr>
+        <% for(var j=0; j<iepTrade.length; j++) {%>
+        <tr>
+            <td><%=iepTrade[j].buyId%></td>
+            <td><%=iepTrade[j].TradeGenrated%></td>
+            <td><%=iepTrade[j].askId%></td>
+        </tr>
+        <% } %>
+      </table>
+
+      
+      </div><!-- main+body-->
+  </body>
+</html>

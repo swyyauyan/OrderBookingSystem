@@ -13,17 +13,73 @@
     }
     #main_body{
       width: 100%;
+      padding: 30px;
     }
     </style>
 
+    <script>
+    var nextTradingPhrase = "";
+    window.onload = setChangeButton;
+
+    function setChangeButton(){
+  
+      switch("<%= tradingPhrase.value %>"){
+
+        case "Pre-opening session - Order Input Period":
+        nextTradingPhrase = "Pre-opening session - Pre-order matching Period";
+        break;
+
+        case "Pre-opening session - Pre-order matching Period":
+        nextTradingPhrase = "Pre-opening session - Order matching Period";
+        break;
+
+        case "Pre-opening session - Order matching Period":
+        nextTradingPhrase = "Pre-opening session - Blocking Period";
+        break;
+
+        case "Pre-opening session - Blocking Period":
+        nextTradingPhrase = "Continuous trading";
+        break;
+
+        case "Continuous trading":
+        break;
+      }
+
+      console.log (nextTradingPhrase);
+      
+      if(nextTradingPhrase.localeCompare("") == 0){
+        document.getElementById('change_to_phrase').style.visibility = 'hidden';
+      }else{
+        document.getElementById('change_to_phrase').innerHTML = "Change to: " + nextTradingPhrase;
+      }
+    }
+
+    async function submitTradingPhrase(){
+      var xhr = new XMLHttpRequest();
+    xhr.open("POST", 'http://localhost:3000/tradingPhrase', true);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.send(JSON.stringify({
+      tradingPhrase: nextTradingPhrase
+    }));
+    xhr.onreadystatechange = function() {
+    if (xhr.readyState == XMLHttpRequest.DONE) {
+      window.location.href = "http://localhost:3000/";
+    }
+    }
+  }
+    </script>
+
     <title><%= title %></title>
     <div id = 'header'>
-      <h2><%= title %></h2>
+      <h2><a href="http://localhost:3000"><%= title %></a></h2>
     </div>
   </head>
   <body>
     <div id = 'main_body'>
-    trading phrase
+      <br><br>
+      <b>Current Trading phrase:</b> <%= tradingPhrase.value%>
+      <br><br>
+      <button id = "change_to_phrase" onclick="submitTradingPhrase()">Change to: </button>
       </div><!-- main+body-->
   </body>
 </html>

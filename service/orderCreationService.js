@@ -8,7 +8,7 @@ var orderOverviewService = new OrderOverviewService();
 var SessionInformation = require("../model/sessionInformation");
 
 var DEFAULT_INTERVAL = 1;
-var DEFAULT_TRADING_PHRASE = "Continuous trading";
+var DEFAULT_TRADING_PHRASE = "Pre-opening session - Order Input Period";
 
 class OrderCreationService {
   async create(request, res) {

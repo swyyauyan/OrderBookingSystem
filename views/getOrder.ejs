@@ -12,18 +12,79 @@
       padding: 10px;
     }
     #main_body{
+      padding-left: 30px;
       width: 100%;
+    }
+    #order_overview_table, #order_history_table{
+      width: 60%;
+      border: 1px solid black; 
+    }
+
+    #order_overview_table td, #order_history_table td, #order_history_table th{
+      padding: 3px;
+      border: 1px solid black; 
     }
     </style>
 
     <title><%= title %></title>
     <div id = 'header'>
-      <h2><%= title %></h2>
+      <h2><a href="http://localhost:3000"><%= title %></a></h2>
     </div>
   </head>
   <body>
     <div id = 'main_body'>
-    Get order details
+    <br>
+      <h2>Get order details</h2>
+      <h4>Order Overview</h4>
+      <table id = 'order_overview_table'>
+        <tr>
+          <td>Order Id: </td>
+          <td><b><%= orderHistories[orderHistories.length -1].orderId %></b></td>
+        </tr>
+        <tr>
+          <td>Order Action: </td>
+          <td><b><%= orderHistories[orderHistories.length -1].request.action %></b></td>
+        </tr>
+        <tr>
+          <td>Order Type: </td>
+          <td><b><%= orderHistories[orderHistories.length -1].request.type %></b></td>
+        </tr>
+        <tr>
+          <td>Order Qty: </td>
+          <td><b><%= orderHistories[orderHistories.length -1].request.qty %></b></td>
+        </tr>
+        <tr>
+          <td>Order Price: </td>
+          <td><b><%= orderHistories[orderHistories.length -1].request.price %></b></td>
+        </tr>
+        <tr>
+          <td>Order Trading Phrase: </td>
+          <td><b><%= orderHistories[orderHistories.length -1].request.tradingPhrase %></b></td>
+        </tr>
+        <tr>
+          <td>Order Creation time: </td>
+          <td><b><%= orderHistories[orderHistories.length -1].createAt %></b></td>
+        </tr>
+      </table>
+      <br>
+      <hr>
+      <h4>Order Histories</h4>
+
+      <table id = 'order_history_table'>
+        <tr>
+          <th>Date time</th>
+            <th>Log</th>
+        </tr>
+
+        <% for(var i=0; i<orderHistories.length; i++) {%>
+            <tr>
+              <td><%= orderHistories[i].createAt%></td>
+              <td><%= orderHistories[i].description.description %></td>  
+            </tr>
+        <%}%>
+    </table>
+
+    <!-- <%= orderHistories%> -->
       </div><!-- main+body-->
   </body>
 </html>

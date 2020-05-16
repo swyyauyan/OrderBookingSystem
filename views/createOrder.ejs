@@ -12,18 +12,62 @@
       padding: 10px;
     }
     #main_body{
+      padding-left: 30px;
       width: 100%;
     }
     </style>
 
+<script>
+  function submitOrder(){
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", 'http://localhost:3000/order', true);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.send(JSON.stringify({
+      action: document.getElementById("orderAction").options[document.getElementById("orderAction").selectedIndex].text,
+      type: document.getElementById("orderType").options[document.getElementById("orderType").selectedIndex].text,
+      qty: document.getElementById('orderQty').value,
+      price: document.getElementById('orderPrice').value
+    }));
+    xhr.onreadystatechange = function() {
+    if (xhr.readyState == XMLHttpRequest.DONE) {
+      alert('Reference ID = ' + xhr.response);
+      window.location.href = "http://localhost:3000/";
+    }
+}
+  }
+
+  </script>
+
     <title><%= title %></title>
     <div id = 'header'>
-      <h2><%= title %></h2>
+      <h2><a href="http://localhost:3000"><%= title %></a></h2>
     </div>
   </head>
   <body>
     <div id = 'main_body'>
-        create order
+        <br>
+        <h2>Create new Order</h2>
+        <form id="myForm">
+          <label for="orderActionLabel">Order action:</label>
+          <select id="orderAction">
+            <option value="bid">Bid</option>
+            <option value="ask">Ask</option>
+          </select>
+          <br>
+          <label for="orderTypeLabel">Order type:</label>
+          <select id="orderType">
+            <option value="limit">Limit</option>
+            <option value="Market">Market</option>
+          </select>
+          <br>
+          <label for="orderQtyLabel">Quantity:</label>
+          <input type="text" id="orderQty" name="orderQty">
+          <br>
+          <label for="orderPriceLabel">Price:</label>
+          <input type="text" id="orderPrice" name="orderPrice">
+          <br>
+          <button onclick="submitOrder()">Submit</button>
+        </form>
       </div><!-- main+body-->
   </body>
 </html>

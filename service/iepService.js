@@ -1,14 +1,15 @@
 var _ = require("lodash");
+var Big = require("big-js");
 var Order = require("../model/order");
 var OrderHistory = require("../model/orderHistory");
 var historyList = require("../model/historyCodeList");
 var SessionInformation = require("../model/sessionInformation");
 
 var DEFAULT_INTERVAL = 1;
-var DEFAULT_TRADING_PHRASE = "Continuous trading";
+var DEFAULT_TRADING_PHRASE = "Pre-opening session - Order Input Period";
 
 class IepService {
-  async getValue(res) {
+  async getValue() {
     var tradingPhrase = DEFAULT_TRADING_PHRASE;
     //CHECK
     await SessionInformation.findOne({ key: "tradingPhrase" }, async function (
@@ -23,17 +24,17 @@ class IepService {
       tradingPhrase == "Pre-opening session - Pre-order matching Period"
     ) {
       var possibleIep = await this.getPossibleIep();
-      res.send(possibleIep);
+      return possibleIep;
     } else {
-      var iepValue;
+      var iepValue = [];
       await SessionInformation.findOne({ key: "iepValue" }, async function (
         err,
         phrase
       ) {
-        iepValue = _.get(phrase, "value", "");
+        iepValue.push( _.get(phrase, "value", ""));
       });
 
-      res.send("IEP = " + iepValue);
+      return iepValue;
     }
   }
 
@@ -190,12 +191,11 @@ class IepService {
       var lowerAskPrice = askOrders[0].price;
 
       var possibleIep = [];
-      for (
-        var iep = lowerAskPrice;
-        iep <= highestBidPrice;
-        iep = iep + interval
-      ) {
-        possibleIep.push(iep);
+
+      var iep = lowerAskPrice;
+      while(iep <= highestBidPrice){
+        possibleIep.push(Number(iep));
+        iep = (new Big(iep).add(new Big(interval)))
       }
       return possibleIep;
     }
@@ -310,13 +310,52 @@ class IepService {
       });
       await this.createLog(obj.askId, 11, {}, {'trade stock': obj.TradeGenrated, 'otherOrderId': obj.buyId}); 
     }
-    
+    var closedOrder = 0;
     await Order.find({}, function (err, orders) {
       orders.forEach(async (order) => {
         if (order.qty == 0) {
+          closedOrder++;
           await order.remove();
         }
       });
+    });
+
+    await SessionInformation.findOne({ key: "orderOverview" }, async function (
+      err,
+      overview
+    ) {
+      var totalOrders = (await OrderHistory.distinct("orderId")).length;
+
+      if(overview === null){
+        await new SessionInformation({
+            key: "orderOverview",
+            value: {
+            lstPrc: maxIep.iep,
+            lstVol: iepTrade[iepTrade.length - 1].TradeGenrated,
+            lstTime: new Date().toString(),
+            totalVol: maxIep.matchedShared,
+            high: maxIep.iep, 
+            low: maxIep.iep,
+            open: totalOrders - closedOrder,
+            close: closedOrder
+            }
+        }).save();
+    }else{
+        var value = {
+            lstPrc : maxIep.iep,
+            lstVol : iepTrade[iepTrade.length - 1].TradeGenrated,
+            lstTime: new Date().toString(),
+            totalVol: maxIep.matchedShared,
+            high: maxIep.iep,
+            low: maxIep.iep,
+            open: totalOrders - closedOrder,
+            close: closedOrder
+        }
+        overview.value = value;
+        await overview.save(function (err, overview) {
+            if (err) return console.error(err);
+          });
+    }
     });
   }
 

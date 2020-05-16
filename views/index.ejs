@@ -13,6 +13,7 @@
     }
     #main_body{
       width: 100%;
+      padding-left: 10px;
     }
 
     #order_overview{
@@ -63,7 +64,7 @@
 
     <title><%= title %></title>
     <div id = 'header'>
-      <h2><%= title %></h2>
+      <h2><a href="http://localhost:3000"><%= title %></a></h2>
     </div>
   </head>
   <body>
@@ -104,13 +105,14 @@
         <!--<p><b>Yesterday closing price:</b></p>-->
         <br>
         <h3>- IEP -</h3>
-
-        <p><b>Possible Iep / Today Iep:</b></p>
-        <p><%= iepValue.value %></p>
+        <% for(var i=0; i<iepValue.length; i++) {%>
+        <li> <a href="http://localhost:3000/get/iep/<%= iepValue[i] %>"><%= iepValue[i] %></a></li>
+        <% } %>
       </div><!-- trading_information -->
       <div id = 'order_book_col'>
         <h3>- Order Book -</h3>
         <a href="http://localhost:3000/create/order"><button>Create Order</button></a>
+        <a href="http://localhost:3000/get/orderlogs"><button>View Order log</button></a>
         <br><br>
         <div id = 'order_book_div'>
         <table id = 'order_book_table_bid'>
@@ -126,7 +128,7 @@
           <% for(var i=0; i<bidOrderBook.length; i++) {%>
           <tr>
             <td><a href="http://localhost:3000/get/order/<%= bidOrderBook[i].orderId %>"><%= bidOrderBook[i].orderId %></a></td>
-            <td><%= bidOrderBook[i].price %></td>
+            <td><% if(bidOrderBook[i].type == 'LIMIT') { %> <%= bidOrderBook[i].price %><% } else {%> AT-AUTION<% } %></td>
             <td><%= bidOrderBook[i].qty %></td>
             <td><%= bidOrderBook[i].createAt %></td>
           </tr>
@@ -145,14 +147,14 @@
           </tr>
           <% for(var i=0; i<askOrderBook.length; i++) {%>
             <tr>
-              <td><%= askOrderBook[i].orderId %></td>
-              <td><%= askOrderBook[i].price %></td>
+              <td><a href="http://localhost:3000/get/order/<%= askOrderBook[i].orderId %>"><%= askOrderBook[i].orderId %></a></td>
+              <td><% if(askOrderBook[i].type == 'LIMIT') { %> <%= askOrderBook[i].price %><% } else {%> AT-AUTION<% } %></td>
               <td><%= askOrderBook[i].qty %></td>
               <td><%= askOrderBook[i].createAt %></td>
             </tr>
             <% } %>
         </table>
-
+        
         </div> <!-- order_book_div-->
       </div><!-- order_book_col -->
       </div><!-- main+body-->
